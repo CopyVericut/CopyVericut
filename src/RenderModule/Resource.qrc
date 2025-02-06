@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/Images">
+        <file>Images/Cloudy.png</file>
+        <file>Images/cursor-magnify.png</file>
+        <file>Images/cursor-magnify-area.png</file>
+        <file>Images/cursor-pan.png</file>
+        <file>Images/cursor-rotate.png</file>
+    </qresource>
+</RCC>
