@@ -87,6 +87,9 @@ void CopyVericut::ReadCNCFile()
 	{
 		cncProcess->ReadCncFile(filePath);
 	}
+
+	/*解析CNC代码*/
+	cncProcess->parseCNC();
 }
 
 void CopyVericut::Quit()
