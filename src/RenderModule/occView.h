@@ -138,7 +138,7 @@ namespace TubeNext
 
         //! rubber rectangle for the mouse selection.
         QRubberBand* myRectBand;
-    public:
+    public slots:
         int View_Top();
         int View_Bottom();
         int View_Left();

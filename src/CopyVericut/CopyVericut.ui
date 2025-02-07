@@ -14,7 +14,7 @@
    <enum>Qt::NoContextMenu</enum>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>CopyVericut</string>
   </property>
   <property name="toolTip">
    <string notr="true"/>
@@ -418,7 +418,7 @@
        <string/>
       </property>
       <property name="pixmap">
-       <pixmap>Pic/刀具.png</pixmap>
+       <pixmap resource="CopyVericut.qrc">:/CopyVericut/刀具.png</pixmap>
       </property>
      </widget>
     </widget>
@@ -669,13 +669,14 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionView_Left"/>
     <addaction name="actionView_Right"/>
     <addaction name="actionView_Top"/>
+    <addaction name="actionView_Rear"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
      <string>导入数据</string>
     </property>
     <addaction name="import_machining_part"/>
-    <addaction name="import_machone_model"/>
+    <addaction name="import_machine_model"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_3"/>
@@ -750,12 +751,20 @@ p, li { white-space: pre-wrap; }
     <string>导入加工零件</string>
    </property>
   </action>
-  <action name="import_machone_model">
+  <action name="import_machine_model">
    <property name="text">
     <string>导入机床模型</string>
    </property>
   </action>
+  <action name="actionView_Rear">
+   <property name="text">
+    <string>View_Rear</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="CopyVericut.qrc"/>
+  <include location="C:/Users/Administrator/.designer/backup/CopyVericut.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -143,12 +143,12 @@ void TubeNext::OccView::init()
 
     //myView->SetBackgroundColor(Quantity_NOC_BLACK);
 	//背景渐变色设置
-    QFile::copy(":/Images/Images/Cloudy.png", "./Cloudy.png");
-    Standard_CString FileName = "./Cloudy.png";
+    //QFile::copy(":/Images/Images/Cloudy.png", "./Cloudy.png");
+   // Standard_CString FileName = "./Cloudy.png";
 	myView->SetBgGradientColors(background_1, background_2, Aspect_GFM_VER, Standard_True);
-    myView->SetBackgroundImage(FileName,Aspect_FM_STRETCH,  true);
+    //myView->SetBackgroundImage(FileName,Aspect_FM_STRETCH,  true);
     myView->MustBeResized();
-    myView->TriedronDisplay(Aspect_TOTP_LEFT_LOWER, Quantity_NOC_BLACK, 0.07, V3d_ZBUFFER);
+    myView->TriedronDisplay(Aspect_TOTP_LEFT_LOWER, Quantity_NOC_BLACK, 0.10, V3d_ZBUFFER);
     myView->Redraw();
     myContext->SetDisplayMode(1, Standard_True);
 }

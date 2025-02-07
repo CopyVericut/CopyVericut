@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <rendermodule_global.h>
 #include "occView.h"
 #include <opencascade/AIS_Plane.hxx>
 #include <opencascade/AIS_Shape.hxx>
@@ -45,7 +46,7 @@ namespace TubeNext
 		shape() = default;
 	};
 
-	class DisplayCore
+	class RENDERMODULE_EXPORT DisplayCore
 	{
 	public:
 		Handle(AIS_InteractiveContext) Context;

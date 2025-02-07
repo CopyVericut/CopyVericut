@@ -1,4 +1,5 @@
 <RCC>
-    <qresource prefix="CopyVericut">
-    </qresource>
+  <qresource prefix="CopyVericut">
+    <file>刀具.png</file>
+  </qresource>
 </RCC>
