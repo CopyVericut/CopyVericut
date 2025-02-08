@@ -29,7 +29,9 @@ public:
 	~CncProcess()=default;
 public:
 	void ReadCncFile(QString filePath);
-	void parseCNC();
+	bool parseCNC();
+	void GetLinearInterpolationPoints(CncPathData cncPathData);
+	void GetArcInterpolationPoints(CncPathData cncPathData);
 public:
 	vector<QString> cncContentList;
 	vector<CncPathData> cncPathDataList;
