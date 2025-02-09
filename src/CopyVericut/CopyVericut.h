@@ -17,6 +17,7 @@ public slots:
 	void ImportPart();
 	void ImportMachine();
 	void ReadCNCFile();
+    void PathSimulation();
 private:
     Ui::CopyVericutClass ui;
 	QWidget* parent;

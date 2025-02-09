@@ -5,7 +5,20 @@
 #include <QTextStream>
 #include <QDebug>
 #include <regex>
-
+#include <opencascade/gp_Pnt.hxx>
+#include <opencascade/gp_Vec.hxx>
+#include <opencascade/BRepBuilderAPI_MakeEdge.hxx>
+#include <opencascade/BRep_Tool.hxx>
+#include <opencascade/GProp_GProps.hxx>
+#include <opencascade/BRepGProp.hxx>
+#include <opencascade/TopExp.hxx>
+#include <opencascade/TopoDS_Edge.hxx>
+#include <opencascade/TopoDS_Vertex.hxx>
+#include <opencascade/gp_Ax2.hxx>
+#include <opencascade/gp_Circ.hxx>
+#include <opencascade/GC_MakeArcOfCircle.hxx>
+#include <opencascade/GeomAdaptor_Curve.hxx>
+#include <opencascade/GCPnts_UniformAbscissa.hxx>
 CncProcess::CncProcess()
 {}
 void CncProcess::ReadCncFile(QString filePath)
@@ -145,14 +158,99 @@ bool CncProcess::parseCNC()//解析CNC文件
 	return true;
 }
 
-void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData)
+void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double step)
 {
+	InterpolationPointsList.clear();
+	gp_Pnt aPnt1 = gp_Pnt(cncPathData.startPointX, cncPathData.startPointY, cncPathData.startPointZ);//起点
+	gp_Pnt aPnt2 = gp_Pnt(cncPathData.endPointX, cncPathData.endPointY, cncPathData.endPointZ);//终点
+	TopoDS_Edge aEdge1 = BRepBuilderAPI_MakeEdge(aPnt1, aPnt2).Edge();
+	// 计算线段长度
+	GProp_GProps system;
+	BRepGProp::LinearProperties(aEdge1, system);
+	double edge_length = system.Mass();  // 线段长度
 
+	// 计算离散点数，保证是整数
+	int num_points = std::max(1, static_cast<int>(std::round(edge_length / step)));
+
+	// 获取起点和终点坐标
+	TopoDS_Vertex mVer1 = TopExp::FirstVertex(aEdge1, true);
+	TopoDS_Vertex mVer2 = TopExp::LastVertex(aEdge1, true);
+	gp_Pnt P1 = BRep_Tool::Pnt(mVer1);
+	gp_Pnt P2 = BRep_Tool::Pnt(mVer2);
+
+	// 计算方向向量
+	gp_Vec mVec(P1, P2);
+	if (mVec.Magnitude() < Precision::Confusion())
+	{
+		std::cerr << "Error: Points are too close or identical!" << std::endl;
+	}
+	mVec.Normalize();
+
+	// 计算离散点
+	for (int i = 0; i < num_points; ++i)
+	{
+		gp_Pnt newPoint = P1.Translated(mVec.Scaled(step * i));
+		InterpolationPointsList.push_back(newPoint);
+	}
 }
 
-void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData)
+void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData, string Direction, double step)
 {
+	InterpolationPointsList.clear();
+	gp_Pnt aPnt1 = gp_Pnt(cncPathData.startPointX, cncPathData.startPointY, cncPathData.startPointZ);//起点
+	gp_Pnt aPnt2 = gp_Pnt(cncPathData.endPointX, cncPathData.endPointY, cncPathData.endPointZ);//终点
+	// 计算圆心
+	gp_Pnt circle_center(aPnt1.X() + cncPathData.I, aPnt1.Y() +cncPathData.J, aPnt1.Z());
+	// 计算半径
+	double radius = std::sqrt((circle_center.X() - aPnt1.X()) * (circle_center.X() - aPnt1.X()) +(circle_center.Y() - aPnt1.Y()) * (circle_center.Y() - aPnt1.Y()));
+	// 确定旋转方向 (G02 顺时针, G03 逆时针)
+	gp_Dir Axis(0, 0, (Direction == "G02") ? -1 : 1);
+	gp_Ax2 CircleAxis(circle_center, Axis);
+	gp_Circ Circle(CircleAxis, radius);
 
+	// 创建圆弧
+	GC_MakeArcOfCircle ArcofCircle(Circle, aPnt1, aPnt2, true);
+	if (!ArcofCircle.IsDone()) 
+	{
+		std::cerr << "Error: Failed to create arc!" << std::endl;
+		
+	}
+
+	// 创建边
+	TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(ArcofCircle.Value()).Edge();
+
+	// 获取曲线
+	Handle(Geom_Curve) aCurve;
+	Standard_Real ufirst, ulast;
+	aCurve = BRep_Tool::Curve(arcEdge, ufirst, ulast);
+
+	// 适配几何曲线
+	GeomAdaptor_Curve gac(aCurve, ufirst, ulast);
+
+	// 计算等间距参数
+	GCPnts_UniformAbscissa ua(gac, step);
+	if (!ua.IsDone()) 
+	{
+		std::cerr << "Error: Failed to compute arc discretization!" << std::endl;
+	}
+
+	// 获取离散点
+	int num_points = ua.NbPoints();
+	for (int i = 1; i <= num_points; ++i) {
+		gp_Pnt p;
+		aCurve->D0(ua.Parameter(i), p);
+		InterpolationPointsList.push_back(p);
+	}
+
+	
+}
+
+void CncProcess::PathSimulation()
+{
+	for (auto i:cncPathDataList)
+	{
+		qDebug() << i.endPointX;
+	}
 }
 
 // Compare this snippet from CncProcess.cpp:

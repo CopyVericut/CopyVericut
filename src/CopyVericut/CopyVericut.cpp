@@ -30,7 +30,10 @@ CopyVericut::CopyVericut(QWidget *par): QMainWindow(parent)
 	connect(ui.import_machine_model, SIGNAL(triggered()), this, SLOT(ImportMachine()));
 	/*导入cnc程序*/
 	connect(ui.pushButton_2, SIGNAL(clicked()), this, SLOT(ReadCNCFile()));
+	/*路径仿真*/
+	connect(ui.pushButton_3, SIGNAL(clicked()), this, SLOT(PathSimulation()));
 	setFixedSize(855, 815);
+
 }
 
 CopyVericut::~CopyVericut()
@@ -90,6 +93,11 @@ void CopyVericut::ReadCNCFile()
 
 	/*解析CNC代码*/
 	cncProcess->parseCNC();
+}
+
+void CopyVericut::PathSimulation()
+{
+	cncProcess->PathSimulation();
 }
 
 void CopyVericut::Quit()

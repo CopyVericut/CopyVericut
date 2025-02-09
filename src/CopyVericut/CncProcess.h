@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <QString>
 #include <vector>
+#include <opencascade/gp_Pnt.hxx>
 using namespace std;
 
 enum PathType
@@ -30,10 +31,12 @@ public:
 public:
 	void ReadCncFile(QString filePath);
 	bool parseCNC();
-	void GetLinearInterpolationPoints(CncPathData cncPathData);
-	void GetArcInterpolationPoints(CncPathData cncPathData);
+	void GetLinearInterpolationPoints(CncPathData cncPathData,double step=0.01);
+	void GetArcInterpolationPoints(CncPathData cncPathData,string Direction,double step=0.01);
+	void PathSimulation();
 public:
 	vector<QString> cncContentList;
 	vector<CncPathData> cncPathDataList;
+	vector<gp_Pnt> InterpolationPointsList;//插补点
 };
 
