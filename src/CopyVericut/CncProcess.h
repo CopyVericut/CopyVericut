@@ -2,8 +2,9 @@
 #include <QString>
 #include <vector>
 #include <opencascade/gp_Pnt.hxx>
+#include <DisplayCore.h>
 using namespace std;
-
+using namespace TubeNext;
 enum PathType
 {
 	Line,
@@ -31,9 +32,9 @@ public:
 public:
 	void ReadCncFile(QString filePath);
 	bool parseCNC();
-	void GetLinearInterpolationPoints(CncPathData cncPathData,double step=0.01);
-	void GetArcInterpolationPoints(CncPathData cncPathData,string Direction,double step=0.01);
-	void PathSimulation();
+	void GetLinearInterpolationPoints(CncPathData cncPathData,double step=0.1);
+	void GetArcInterpolationPoints(CncPathData cncPathData,double step=0.1);
+	void PathSimulation(DisplayCore *displayCore);
 public:
 	vector<QString> cncContentList;
 	vector<CncPathData> cncPathDataList;

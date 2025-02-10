@@ -93,11 +93,12 @@ void CopyVericut::ReadCNCFile()
 
 	/*解析CNC代码*/
 	cncProcess->parseCNC();
+	statusBar()->showMessage(QString::fromLocal8Bit("状态：CNC文件读取/解析完成"));
 }
 
 void CopyVericut::PathSimulation()
 {
-	cncProcess->PathSimulation();
+	cncProcess->PathSimulation(renderWindow->DisplayCoreManager);
 }
 
 void CopyVericut::Quit()

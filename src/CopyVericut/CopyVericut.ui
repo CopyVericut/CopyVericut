@@ -682,6 +682,7 @@ p, li { white-space: pre-wrap; }
    <addaction name="menu_3"/>
    <addaction name="menu_2"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <action name="action">
    <property name="checkable">
     <bool>false</bool>

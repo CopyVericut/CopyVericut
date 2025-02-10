@@ -19,6 +19,7 @@
 #include <opencascade/GC_MakeArcOfCircle.hxx>
 #include <opencascade/GeomAdaptor_Curve.hxx>
 #include <opencascade/GCPnts_UniformAbscissa.hxx>
+#include <opencascade/Geom_CartesianPoint.hxx>
 CncProcess::CncProcess()
 {}
 void CncProcess::ReadCncFile(QString filePath)
@@ -163,7 +164,12 @@ void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double st
 	InterpolationPointsList.clear();
 	gp_Pnt aPnt1 = gp_Pnt(cncPathData.startPointX, cncPathData.startPointY, cncPathData.startPointZ);//起点
 	gp_Pnt aPnt2 = gp_Pnt(cncPathData.endPointX, cncPathData.endPointY, cncPathData.endPointZ);//终点
-	TopoDS_Edge aEdge1 = BRepBuilderAPI_MakeEdge(aPnt1, aPnt2).Edge();
+	TopoDS_Edge aEdge1;
+	if (!aPnt1.IsEqual(aPnt2,0.01))
+	{
+		 aEdge1 = BRepBuilderAPI_MakeEdge(aPnt1, aPnt2).Edge();
+	}
+	
 	// 计算线段长度
 	GProp_GProps system;
 	BRepGProp::LinearProperties(aEdge1, system);
@@ -173,28 +179,33 @@ void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double st
 	int num_points = std::max(1, static_cast<int>(std::round(edge_length / step)));
 
 	// 获取起点和终点坐标
-	TopoDS_Vertex mVer1 = TopExp::FirstVertex(aEdge1, true);
-	TopoDS_Vertex mVer2 = TopExp::LastVertex(aEdge1, true);
-	gp_Pnt P1 = BRep_Tool::Pnt(mVer1);
-	gp_Pnt P2 = BRep_Tool::Pnt(mVer2);
-
-	// 计算方向向量
-	gp_Vec mVec(P1, P2);
-	if (mVec.Magnitude() < Precision::Confusion())
+	if (!aEdge1.IsNull())
 	{
-		std::cerr << "Error: Points are too close or identical!" << std::endl;
-	}
-	mVec.Normalize();
+		TopoDS_Vertex mVer1 = TopExp::FirstVertex(aEdge1, true);
+		TopoDS_Vertex mVer2 = TopExp::LastVertex(aEdge1, true);
+		gp_Pnt P1 = BRep_Tool::Pnt(mVer1);
+		gp_Pnt P2 = BRep_Tool::Pnt(mVer2);
+		// 计算方向向量
+		gp_Vec mVec(P1, P2);
+		if (mVec.Magnitude() < Precision::Confusion())
+		{
+			std::cerr << "Error: Points are too close or identical!" << std::endl;
+		}
+		mVec.Normalize();
 
-	// 计算离散点
-	for (int i = 0; i < num_points; ++i)
-	{
-		gp_Pnt newPoint = P1.Translated(mVec.Scaled(step * i));
-		InterpolationPointsList.push_back(newPoint);
+		// 计算离散点
+		for (int i = 0; i < num_points; ++i)
+		{
+			gp_Pnt newPoint = P1.Translated(mVec.Scaled(step * i));
+			InterpolationPointsList.push_back(newPoint);
+		}
 	}
+	
+
+	
 }
 
-void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData, string Direction, double step)
+void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData,double step)
 {
 	InterpolationPointsList.clear();
 	gp_Pnt aPnt1 = gp_Pnt(cncPathData.startPointX, cncPathData.startPointY, cncPathData.startPointZ);//起点
@@ -204,7 +215,16 @@ void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData, string Direc
 	// 计算半径
 	double radius = std::sqrt((circle_center.X() - aPnt1.X()) * (circle_center.X() - aPnt1.X()) +(circle_center.Y() - aPnt1.Y()) * (circle_center.Y() - aPnt1.Y()));
 	// 确定旋转方向 (G02 顺时针, G03 逆时针)
-	gp_Dir Axis(0, 0, (Direction == "G02") ? -1 : 1);
+	gp_Dir Axis(0, 0, 0);
+	if (aPnt1.X()>aPnt2.X() or aPnt1.Y()>aPnt2.Y())
+	{
+		Axis.SetZ(1);
+	}
+	else if (aPnt1.X()< aPnt2.X() or aPnt1.Y() < aPnt2.Y())
+	{
+		Axis.SetZ(-1);
+	}
+	// 确定旋转方向 (G02 顺时针, G03 逆时针)
 	gp_Ax2 CircleAxis(circle_center, Axis);
 	gp_Circ Circle(CircleAxis, radius);
 
@@ -245,11 +265,30 @@ void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData, string Direc
 	
 }
 
-void CncProcess::PathSimulation()
+void CncProcess::PathSimulation(DisplayCore* displayCore)
 {
 	for (auto i:cncPathDataList)
 	{
-		qDebug() << i.endPointX;
+		if (i.pathType==Line)
+		{
+			GetLinearInterpolationPoints(i);
+		}
+		else if (i.pathType==Arc)
+		{
+			//GetArcInterpolationPoints(i);
+		}
+		for (auto j: InterpolationPointsList)
+		{
+
+			Handle(Geom_Point) p = new Geom_CartesianPoint(j);
+			Handle(AIS_Point) ais_point= new AIS_Point(p);
+			auto drawer = ais_point->Attributes();
+			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+			Handle(Prs3d_PointAspect) asp = new Prs3d_PointAspect(Aspect_TOM_POINT, acolor, 6);
+			drawer->SetPointAspect(asp);
+			ais_point->SetAttributes(drawer);
+			displayCore->Context->Display(ais_point, true);
+		}
 	}
 }
 

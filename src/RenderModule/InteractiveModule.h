@@ -23,7 +23,7 @@ namespace TubeNext
 		GeomAbs_BezierCurve,
 		GeomAbs_BSplineCurve,
 		GeomAbs_OffsetCurve,
-		GeomAbs_OtherCurve,
+		//GeomAbs_OtherCurve,
 		AllCurve,
 		TopAbs_FACE_,
 		VectorType,
