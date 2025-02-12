@@ -98,7 +98,8 @@ void CopyVericut::ReadCNCFile()
 
 void CopyVericut::PathSimulation()
 {
-	cncProcess->PathSimulation(renderWindow->DisplayCoreManager);
+	//cncProcess->PathSimulation(renderWindow->DisplayCoreManager);
+	cncProcess->DisPlayToolPath(renderWindow->DisplayCoreManager);
 }
 
 void CopyVericut::Quit()

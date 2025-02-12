@@ -35,6 +35,7 @@ public:
 	void GetLinearInterpolationPoints(CncPathData cncPathData,double step=0.1);
 	void GetArcInterpolationPoints(CncPathData cncPathData,double step=0.1);
 	void PathSimulation(DisplayCore *displayCore);
+	void DisPlayToolPath(DisplayCore* displayCore);
 public:
 	vector<QString> cncContentList;
 	vector<CncPathData> cncPathDataList;

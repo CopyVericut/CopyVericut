@@ -20,6 +20,7 @@
 #include <opencascade/GeomAdaptor_Curve.hxx>
 #include <opencascade/GCPnts_UniformAbscissa.hxx>
 #include <opencascade/Geom_CartesianPoint.hxx>
+#include <opencascade/GC_MakeSegment.hxx>
 CncProcess::CncProcess()
 {}
 void CncProcess::ReadCncFile(QString filePath)
@@ -39,11 +40,11 @@ void CncProcess::ReadCncFile(QString filePath)
 }
 bool CncProcess::parseCNC()//解析CNC文件
 {
-	std::regex patternX(R"([X]([\d]+(?:\.\d+)?))");  // 匹配大写字母X后面的数字
-	std::regex patternY(R"([Y]([\d]+(?:\.\d+)?))");  // 匹配大写字母Y后面的数字
-	std::regex patternZ(R"([Z]([\d]+(?:\.\d+)?))");  // 匹配大写字母Z后面的数字
-	std::regex patternI(R"([I]([\d]+(?:\.\d+)?))");  // 匹配大写字母I后面的数字
-	std::regex patternJ(R"([J]([\d]+(?:\.\d+)?))");  // 匹配大写字母J后面的数字
+	std::regex patternX(R"(X(-?\d*\.\d+|-?\d+))");  // 匹配大写字母X后面的数字
+	std::regex patternY(R"(Y(-?\d*\.\d+|-?\d+))");  // 匹配大写字母Y后面的数字
+	std::regex patternZ(R"(Z(-?\d*\.\d+|-?\d+))");  // 匹配大写字母Z后面的数字
+	std::regex patternI(R"(I(-?\d*\.\d+|-?\d+))");  // 匹配大写字母I后面的数字
+	std::regex patternJ(R"(J(-?\d*\.\d+|-?\d+))");  // 匹配大写字母J后面的数字
 	std::smatch match;
 	std::string text;
 	CncPathData cncPathData;
@@ -51,10 +52,12 @@ bool CncProcess::parseCNC()//解析CNC文件
 	double currentPointX{ 0.0 }, currentPointY{ 0.0 }, currentPointZ{ 100.0 }, currentI{ 0.0 }, currentJ{0.0};
 	for (auto i : cncContentList)
 	{
+
 		/*确定Gstatus状态*/
 		if (i.contains("G0") or i.contains("G01") or i.contains("G1")) { Gstatus = "G01/G0"; }
 		else if (i.contains("G2") or i.contains("G02")) { Gstatus = "G02"; }
 		else if (i.contains("G3") or i.contains("G03")) { Gstatus = "G03"; }
+		else if (i == "%") {continue;}
 		/*判断Gstatus状态*/
 		if (Gstatus=="G01/G0")
 		{
@@ -93,6 +96,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 			{
 				cncPathData.endPointZ = currentPointZ;
 			}
+
 			cncPathDataList.push_back(cncPathData);
 		}
 		else if (Gstatus=="G02" or Gstatus=="G03")
@@ -137,7 +141,6 @@ bool CncProcess::parseCNC()//解析CNC文件
 			{
 				cncPathData.endPointZ = currentPointZ;
 			}
-			cncPathDataList.push_back(cncPathData);
 			/*I值*/
 			if (std::regex_search(text, match, patternI))
 			{
@@ -148,11 +151,9 @@ bool CncProcess::parseCNC()//解析CNC文件
 			{
 				cncPathData.J = std::stod(match[1]);
 			}
-			
-
 			cncPathDataList.push_back(cncPathData);
-
 		}
+		
 	
 	}
 	qDebug() << "解析完成";
@@ -275,7 +276,7 @@ void CncProcess::PathSimulation(DisplayCore* displayCore)
 		}
 		else if (i.pathType==Arc)
 		{
-			//GetArcInterpolationPoints(i);
+			GetArcInterpolationPoints(i);
 		}
 		for (auto j: InterpolationPointsList)
 		{
@@ -290,6 +291,39 @@ void CncProcess::PathSimulation(DisplayCore* displayCore)
 			displayCore->Context->Display(ais_point, true);
 		}
 	}
+}
+
+void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
+{
+	double point0[3] = { 0.0,0.0,0.0 };
+	double point1[3] = { 0.0,0.0,0.0 };
+	for (auto i : cncPathDataList)
+	{
+		if (i.pathType == Line)
+		{
+			point0[0] = i.startPointX;
+			point0[1] = i.startPointY;
+			point0[2] = i.startPointZ;
+			point1[0] = i.endPointX;
+			point1[1] = i.endPointY;
+			point1[2] = i.endPointZ;
+			GC_MakeSegment* aSegment = new GC_MakeSegment(gp_Pnt(point0[0], point0[1], point0[2]), gp_Pnt(point1[0], point1[1], point1[2]));
+			TopoDS_Edge anEdge = BRepBuilderAPI_MakeEdge(aSegment->Value()).Edge();
+			Handle(AIS_Shape) ais_line = new AIS_Shape(anEdge);
+			auto drawer = ais_line->Attributes();
+			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+			Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
+			drawer->SetLineAspect(asp);
+			ais_line->SetAttributes(drawer);
+			displayCore->Context->Display(ais_line, true);
+		}
+		else if (i.pathType == Arc)
+		{
+			
+		}
+		
+	}
+
 }
 
 // Compare this snippet from CncProcess.cpp:
