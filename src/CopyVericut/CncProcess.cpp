@@ -5,6 +5,7 @@
 #include <QTextStream>
 #include <QDebug>
 #include <regex>
+#include <QApplication>
 #include <opencascade/gp_Pnt.hxx>
 #include <opencascade/gp_Vec.hxx>
 #include <opencascade/BRepBuilderAPI_MakeEdge.hxx>
@@ -21,6 +22,7 @@
 #include <opencascade/GCPnts_UniformAbscissa.hxx>
 #include <opencascade/Geom_CartesianPoint.hxx>
 #include <opencascade/GC_MakeSegment.hxx>
+#include <opencascade/BRepBuilderAPI_MakeWire.hxx>
 CncProcess::CncProcess()
 {}
 void CncProcess::ReadCncFile(QString filePath)
@@ -57,7 +59,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 		if (i.contains("G0") or i.contains("G01") or i.contains("G1")) { Gstatus = "G01/G0"; }
 		else if (i.contains("G2") or i.contains("G02")) { Gstatus = "G02"; }
 		else if (i.contains("G3") or i.contains("G03")) { Gstatus = "G03"; }
-		else if (i == "%") {continue;}
+		else if (i == "%" or i=="") { continue; }
 		/*判断Gstatus状态*/
 		if (Gstatus=="G01/G0")
 		{
@@ -153,8 +155,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 			}
 			cncPathDataList.push_back(cncPathData);
 		}
-		
-	
+
 	}
 	qDebug() << "解析完成";
 	return true;
@@ -297,16 +298,20 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 {
 	double point0[3] = { 0.0,0.0,0.0 };
 	double point1[3] = { 0.0,0.0,0.0 };
-	for (auto i : cncPathDataList)
+	for (auto cncdata : cncPathDataList)
 	{
-		if (i.pathType == Line)
+		if (cncdata.pathType == Line)
 		{
-			point0[0] = i.startPointX;
-			point0[1] = i.startPointY;
-			point0[2] = i.startPointZ;
-			point1[0] = i.endPointX;
-			point1[1] = i.endPointY;
-			point1[2] = i.endPointZ;
+			point0[0] = cncdata.startPointX;
+			point0[1] = cncdata.startPointY;
+			point0[2] = cncdata.startPointZ;
+			point1[0] = cncdata.endPointX;
+			point1[1] = cncdata.endPointY;
+			point1[2] = cncdata.endPointZ;
+			if (point0[1]==point1[1] and point0[0]==point1[0] and point0[2]==point1[2])
+			{
+				continue;
+			}
 			GC_MakeSegment* aSegment = new GC_MakeSegment(gp_Pnt(point0[0], point0[1], point0[2]), gp_Pnt(point1[0], point1[1], point1[2]));
 			TopoDS_Edge anEdge = BRepBuilderAPI_MakeEdge(aSegment->Value()).Edge();
 			Handle(AIS_Shape) ais_line = new AIS_Shape(anEdge);
@@ -316,9 +321,56 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			drawer->SetLineAspect(asp);
 			ais_line->SetAttributes(drawer);
 			displayCore->Context->Display(ais_line, true);
+			// 处理事件，确保 UI 在长时间任务过程中仍能响应
+			QApplication::processEvents();
 		}
-		else if (i.pathType == Arc)
+		else if (cncdata.pathType == Arc )
 		{
+			double i = cncdata.I;
+			double j = cncdata.J;
+			double k = 0.0;
+			double x0 = cncdata.startPointX;
+			double y0 = cncdata.startPointY;
+			double z0 = cncdata.startPointZ;
+			double x = cncdata.endPointX;
+			double y = cncdata.endPointY;
+			double z = cncdata.endPointZ;
+			// 圆心坐标
+			gp_Pnt circle_center(x0+i, y0+j, k);
+			// 计算半径
+			double r = std::sqrt(std::pow(i, 2) + std::pow(j, 2));
+			// 使用 gp_Pnt 创建圆心坐标
+			gp_Pnt Location(circle_center.X(), circle_center.Y(), circle_center.Z());
+			// 创建法线方向
+			gp_Dir Axis(0,0,1.0);
+			if ((x - x0) * (j - y0) - (y - y0) * (i - x0)<0)
+			{
+				Axis.SetZ(-1.0);
+			}
+			else if ((x - x0) * (j - y0) - (y - y0) * (i - x0) > 0)
+			{
+				Axis.SetZ(1.0);
+			}
+			// 定义圆的轴
+			gp_Ax2 CircleAxis(Location, Axis);
+			// 创建圆
+			gp_Circ Circle(CircleAxis, r);
+			// 创建圆弧
+			GC_MakeArcOfCircle ArcofCircle0(Circle, gp_Pnt(x0, y0, z0), gp_Pnt(x, y, z), true);
+			// 创建圆弧边
+			BRepBuilderAPI_MakeEdge ArcofCircle1(ArcofCircle0.Value());
+			// 创建线框
+			BRepBuilderAPI_MakeWire path(ArcofCircle1);
+			TopoDS_Edge arcEdge = ArcofCircle1.Edge();
+			Handle(AIS_Shape) ais_curve = new AIS_Shape(arcEdge);
+			auto drawer = ais_curve->Attributes();
+			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+			Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
+			drawer->SetLineAspect(asp);
+			ais_curve->SetAttributes(drawer);
+			displayCore->Context->Display(ais_curve, true);
+			// 处理事件，确保 UI 在长时间任务过程中仍能响应
+			QApplication::processEvents();
 			
 		}
 		
