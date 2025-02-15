@@ -23,6 +23,12 @@
 #include <opencascade/Geom_CartesianPoint.hxx>
 #include <opencascade/GC_MakeSegment.hxx>
 #include <opencascade/BRepBuilderAPI_MakeWire.hxx>
+#include <opencascade/BRepAdaptor_Surface.hxx>
+#include <opencascade/GeomAbs_SurfaceType.hxx>
+#include <opencascade/BRepLProp_SLProps.hxx>
+#include <opencascade/BRepBuilderAPI_MakeWire.hxx>
+#include <opencascade/TopoDS_Wire.hxx>
+#include <opencascade/BRepBuilderAPI_MakeFace.hxx>
 CncProcess::CncProcess()
 {}
 void CncProcess::ReadCncFile(QString filePath)
@@ -47,6 +53,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 	std::regex patternZ(R"(Z(-?\d*\.\d+|-?\d+))");  // 匹配大写字母Z后面的数字
 	std::regex patternI(R"(I(-?\d*\.\d+|-?\d+))");  // 匹配大写字母I后面的数字
 	std::regex patternJ(R"(J(-?\d*\.\d+|-?\d+))");  // 匹配大写字母J后面的数字
+	std::regex patternK(R"(K(-?\d*\.\d+|-?\d+))");  // 匹配大写字母J后面的数字
 	std::smatch match;
 	std::string text;
 	CncPathData cncPathData;
@@ -54,12 +61,13 @@ bool CncProcess::parseCNC()//解析CNC文件
 	double currentPointX{ 0.0 }, currentPointY{ 0.0 }, currentPointZ{ 100.0 }, currentI{ 0.0 }, currentJ{0.0};
 	for (auto i : cncContentList)
 	{
-
 		/*确定Gstatus状态*/
 		if (i.contains("G0") or i.contains("G01") or i.contains("G1")) { Gstatus = "G01/G0"; }
 		else if (i.contains("G2") or i.contains("G02")) { Gstatus = "G02"; }
 		else if (i.contains("G3") or i.contains("G03")) { Gstatus = "G03"; }
 		else if (i == "%" or i=="") { continue; }
+		/*写入Gcode*/
+		cncPathData.Gcode = i.toStdString();
 		/*判断Gstatus状态*/
 		if (Gstatus=="G01/G0")
 		{
@@ -158,11 +166,40 @@ bool CncProcess::parseCNC()//解析CNC文件
 				cncPathData.J = std::stod(match[1]);
 			}
 			cncPathDataList.push_back(cncPathData);
+			/*K值*/
+			if (std::regex_search(text, match, patternK))
+			{
+				cncPathData.K = std::stod(match[1]);
+			}
+			cncPathDataList.push_back(cncPathData);
 		}
 
 	}
 	qDebug() << "解析完成";
 	return true;
+}
+
+gp_Dir CncProcess::GetFaceDirection(const TopoDS_Face& face)
+{
+	BRepAdaptor_Surface surface(face);
+
+	if (surface.GetType() == GeomAbs_Plane) {
+		// 如果是平面，直接获取法向
+		gp_Pln plane = surface.Plane();
+		return plane.Axis().Direction();
+	}
+	else {
+		// 计算曲面局部点的法向
+		Standard_Real u = 0.5, v = 0.5;  // 选取 UV 参数空间中的一个点
+		BRepLProp_SLProps props(surface, 1, Precision::Confusion());
+
+		if (!props.IsNormalDefined()) {
+			throw std::runtime_error("Cannot determine normal for this face.");
+		}
+
+		gp_Dir normal = props.Normal();  // 获取曲面法向
+		return normal;
+	}
 }
 
 void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double step)
@@ -332,21 +369,34 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 		{
 			double i = cncdata.I;
 			double j = cncdata.J;
-			double k = cncdata.endPointZ;
+			double k = cncdata.K;
 			double x0 = cncdata.startPointX;
 			double y0 = cncdata.startPointY;
 			double z0 = cncdata.startPointZ;
 			double x = cncdata.endPointX;
 			double y = cncdata.endPointY;
 			double z = cncdata.endPointZ;
+			/*定义圆弧的两个端点*/
+			gp_Pnt P1(x0, y0, z0);
+			gp_Pnt P2(x, y, z);
 			// 圆心坐标
-			gp_Pnt circle_center(x0+i, y0+j, k);
+			gp_Pnt circle_center(x0+i, y0+j, z0);
 			// 计算半径
 			double r = std::sqrt(std::pow(i, 2) + std::pow(j, 2));
 			// 使用 gp_Pnt 创建圆心坐标
 			gp_Pnt Location(circle_center.X(), circle_center.Y(), circle_center.Z());
+			// 创建三条边
+			//TopoDS_Edge E1 = BRepBuilderAPI_MakeEdge(P1, P2).Edge();
+			//TopoDS_Edge E2 = BRepBuilderAPI_MakeEdge(P2, circle_center).Edge();
+			//TopoDS_Edge E3 = BRepBuilderAPI_MakeEdge(circle_center, P1).Edge();
+			// 生成 Wire
+			//BRepBuilderAPI_MakeWire wireMaker(E1, E2, E3);
+			//TopoDS_Wire wire = wireMaker.Wire();
+			// 生成 Face
+			//TopoDS_Face face = BRepBuilderAPI_MakeFace(wire).Face();
 			// 创建法线方向
-			gp_Dir Axis(0,0,1.0);
+			//gp_Dir Axis=GetFaceDirection(face);
+			gp_Dir Axis(0, 0, 1);
 			if (cncdata.Gstatus=="G02")
 			{
 				Axis.SetZ(-1.0);
@@ -360,9 +410,7 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			// 创建圆
 			gp_Circ Circle(CircleAxis, r);
 			// 创建圆弧
-			/*定义圆弧的两个端点*/
-			gp_Pnt P1(x0, y0, z0);
-			gp_Pnt P2(x, y, z);
+			
 			if (1)
 			{
 				GC_MakeArcOfCircle ArcofCircle0(Circle, P1, P2, true);
@@ -378,7 +426,6 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			}
 			
 			// 创建圆弧边
-			
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 			

@@ -2,6 +2,7 @@
 #include <QString>
 #include <vector>
 #include <opencascade/gp_Pnt.hxx>
+#include <opencascade/TopoDS_Face.hxx>
 #include <DisplayCore.h>
 using namespace std;
 using namespace TubeNext;
@@ -22,8 +23,10 @@ struct CncPathData
 	double endPointZ;//终点Z坐标
 	double I;//圆弧圆心X坐标
 	double J;//圆弧圆心Y坐标
+	double K;//圆弧圆心Y坐标
 	double R;//圆弧半径
-	string Gstatus;
+	string Gstatus;//状态码
+	string Gcode;//G代码
 };
 class CncProcess
 {
@@ -37,6 +40,8 @@ public:
 	void GetArcInterpolationPoints(CncPathData cncPathData,double step=0.1);
 	void PathSimulation(DisplayCore *displayCore);
 	void DisPlayToolPath(DisplayCore* displayCore);
+	gp_Dir GetFaceDirection(const TopoDS_Face& face);
+
 public:
 	vector<QString> cncContentList;
 	vector<CncPathData> cncPathDataList;
