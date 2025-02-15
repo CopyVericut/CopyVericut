@@ -71,6 +71,8 @@ bool CncProcess::parseCNC()//解析CNC文件
 			cncPathData.startPointZ = currentPointZ;
 			/*设置终点坐标*/
 			text = i.toStdString();
+			/**/
+			cncPathData.Gstatus = "G01/G0";
 			if (std::regex_search(text, match, patternX))
 			{
 				cncPathData.endPointX = std::stod(match[1]);
@@ -114,6 +116,8 @@ bool CncProcess::parseCNC()//解析CNC文件
 			/*设置终点坐标*/
 			text = i.toStdString();
 			/*终点X坐标值*/
+			/*设置G状态码*/
+			cncPathData.Gstatus = Gstatus;
 			if (std::regex_search(text, match, patternX))
 			{
 				cncPathData.endPointX = std::stod(match[1]);
@@ -328,7 +332,7 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 		{
 			double i = cncdata.I;
 			double j = cncdata.J;
-			double k = 0.0;
+			double k = cncdata.endPointZ;
 			double x0 = cncdata.startPointX;
 			double y0 = cncdata.startPointY;
 			double z0 = cncdata.startPointZ;
@@ -343,11 +347,11 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			gp_Pnt Location(circle_center.X(), circle_center.Y(), circle_center.Z());
 			// 创建法线方向
 			gp_Dir Axis(0,0,1.0);
-			if ((x - x0) * (j - y0) - (y - y0) * (i - x0)<0)
+			if (cncdata.Gstatus=="G02")
 			{
 				Axis.SetZ(-1.0);
 			}
-			else if ((x - x0) * (j - y0) - (y - y0) * (i - x0) > 0)
+			else if (cncdata.Gstatus == "G03")
 			{
 				Axis.SetZ(1.0);
 			}
@@ -356,19 +360,25 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			// 创建圆
 			gp_Circ Circle(CircleAxis, r);
 			// 创建圆弧
-			GC_MakeArcOfCircle ArcofCircle0(Circle, gp_Pnt(x0, y0, z0), gp_Pnt(x, y, z), true);
+			/*定义圆弧的两个端点*/
+			gp_Pnt P1(x0, y0, z0);
+			gp_Pnt P2(x, y, z);
+			if (1)
+			{
+				GC_MakeArcOfCircle ArcofCircle0(Circle, P1, P2, true);
+				BRepBuilderAPI_MakeEdge ArcofCircle1(ArcofCircle0.Value());
+				TopoDS_Edge arcEdge = ArcofCircle1.Edge();
+				Handle(AIS_Shape) ais_curve = new AIS_Shape(arcEdge);
+				auto drawer = ais_curve->Attributes();
+				auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+				Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
+				drawer->SetLineAspect(asp);
+				ais_curve->SetAttributes(drawer);
+				displayCore->Context->Display(ais_curve, true);
+			}
+			
 			// 创建圆弧边
-			BRepBuilderAPI_MakeEdge ArcofCircle1(ArcofCircle0.Value());
-			// 创建线框
-			BRepBuilderAPI_MakeWire path(ArcofCircle1);
-			TopoDS_Edge arcEdge = ArcofCircle1.Edge();
-			Handle(AIS_Shape) ais_curve = new AIS_Shape(arcEdge);
-			auto drawer = ais_curve->Attributes();
-			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
-			Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
-			drawer->SetLineAspect(asp);
-			ais_curve->SetAttributes(drawer);
-			displayCore->Context->Display(ais_curve, true);
+			
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 			

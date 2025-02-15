@@ -23,6 +23,7 @@ struct CncPathData
 	double I;//圆弧圆心X坐标
 	double J;//圆弧圆心Y坐标
 	double R;//圆弧半径
+	string Gstatus;
 };
 class CncProcess
 {
