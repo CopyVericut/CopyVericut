@@ -62,9 +62,9 @@ bool CncProcess::parseCNC()//解析CNC文件
 	for (auto i : cncContentList)
 	{
 		/*确定Gstatus状态*/
-		if (i.contains("G0") or i.contains("G01") or i.contains("G1")) { Gstatus = "G01/G0"; }
-		else if (i.contains("G2") or i.contains("G02")) { Gstatus = "G02"; }
-		else if (i.contains("G3") or i.contains("G03")) { Gstatus = "G03"; }
+		if (i.contains(QString(" G00 ")) or i.contains(QString(" G0 ")) or i.contains(QString(" G01 ")) or i.contains(QString(" G1 "))) { Gstatus = "G01/G0"; }
+		else if (i.contains(QString(" G2 ")) or i.contains(QString(" G02 "))) { Gstatus = "G02"; }
+		else if (i.contains(QString(" G3 ")) or i.contains(QString(" G03 "))) { Gstatus = "G03"; }
 		else if (i == "%" or i=="") { continue; }
 		/*写入Gcode*/
 		cncPathData.Gcode = i.toStdString();

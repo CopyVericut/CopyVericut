@@ -98,8 +98,10 @@ void CopyVericut::ReadCNCFile()
 
 void CopyVericut::PathSimulation()
 {
+	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟刀路轨迹"));
 	//cncProcess->PathSimulation(renderWindow->DisplayCoreManager);
 	cncProcess->DisPlayToolPath(renderWindow->DisplayCoreManager);
+	statusBar()->showMessage(QString::fromLocal8Bit("状态：模拟刀路轨迹完成"));
 }
 
 void CopyVericut::Quit()
