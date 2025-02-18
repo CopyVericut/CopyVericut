@@ -42,6 +42,8 @@ void CncProcess::ReadCncFile(QString filePath)
 		/*读取一行*/
 		QString line = in.readLine();  
 		cncContentList.push_back(line);
+		// 处理事件，确保 UI 在长时间任务过程中仍能响应
+		QApplication::processEvents();
 	}
 	file.close();  // 关闭文件
 
@@ -186,6 +188,8 @@ bool CncProcess::parseCNC()//解析CNC文件
 			}
 			cncPathDataList.push_back(cncPathData);
 		}
+		// 处理事件，确保 UI 在长时间任务过程中仍能响应
+		QApplication::processEvents();
 
 	}
 	qDebug() << "解析完成";
@@ -261,55 +265,97 @@ void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double st
 	
 }
 
-void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData,double step)
+void CncProcess::GetArcInterpolationPoints(CncPathData cncdata,double step)
 {
 	InterpolationPointsList.clear();
-	gp_Pnt aPnt1 = gp_Pnt(cncPathData.startPointX, cncPathData.startPointY, cncPathData.startPointZ);//起点
-	gp_Pnt aPnt2 = gp_Pnt(cncPathData.endPointX, cncPathData.endPointY, cncPathData.endPointZ);//终点
-	// 计算圆心
-	gp_Pnt circle_center(aPnt1.X() + cncPathData.I, aPnt1.Y() +cncPathData.J, aPnt1.Z());
+	double i = cncdata.I;
+	double j = cncdata.J;
+	double k = cncdata.K;
+	double x0 = cncdata.startPointX;
+	double y0 = cncdata.startPointY;
+	double z0 = cncdata.startPointZ;
+	double x = cncdata.endPointX;
+	double y = cncdata.endPointY;
+	double z = cncdata.endPointZ;
+	BRepBuilderAPI_MakeEdge ArcofCircle1;
+	TopoDS_Edge arcEdge;
+	/*定义圆弧的两个端点*/
+	gp_Pnt P1(x0, y0, z0);
+	gp_Pnt P2(x, y, z);
+	// 圆心坐标
+	gp_Pnt circle_center(x0 + i, y0 + j, z0 + k);
 	// 计算半径
-	double radius = std::sqrt((circle_center.X() - aPnt1.X()) * (circle_center.X() - aPnt1.X()) +(circle_center.Y() - aPnt1.Y()) * (circle_center.Y() - aPnt1.Y()));
-	// 确定旋转方向 (G02 顺时针, G03 逆时针)
-	gp_Dir Axis(0, 0, 0);
-	if (aPnt1.X()>aPnt2.X() or aPnt1.Y()>aPnt2.Y())
-	{
-		Axis.SetZ(1);
-	}
-	else if (aPnt1.X()< aPnt2.X() or aPnt1.Y() < aPnt2.Y())
-	{
-		Axis.SetZ(-1);
-	}
-	// 确定旋转方向 (G02 顺时针, G03 逆时针)
-	gp_Ax2 CircleAxis(circle_center, Axis);
-	gp_Circ Circle(CircleAxis, radius);
+	double r = std::sqrt(std::pow(i, 2) + std::pow(j, 2) + std::pow(k, 2));
+	// 使用 gp_Pnt 创建圆心坐标
+	gp_Pnt Location(circle_center.X(), circle_center.Y(), circle_center.Z());
 
-	// 创建圆弧
-	GC_MakeArcOfCircle ArcofCircle(Circle, aPnt1, aPnt2, true);
-	if (!ArcofCircle.IsDone()) 
+	if (P1.IsEqual(P2, 0.01))/*整圆*/
 	{
-		std::cerr << "Error: Failed to create arc!" << std::endl;
-		
+		// 创建法线方向
+		gp_Dir Axis(0, 0, 1);
+		if (cncdata.Gstatus == "G02")
+		{
+			Axis.SetZ(-1.0);
+		}
+		else if (cncdata.Gstatus == "G03")
+		{
+			Axis.SetZ(1.0);
+		}
+		// 创建一个圆 (圆心, 法向量, 半径)
+		gp_Ax2 axis(circle_center, Axis);  // 定义圆的坐标系
+		gp_Circ circle(axis, r);  // 创建圆
+
+		// 将圆转换为边 (Edge)
+		BRepBuilderAPI_MakeEdge edge(circle);
+		TopoDS_Edge circleEdge = edge.Edge();  // 返回一个边对象
+		// 创建边
+		arcEdge = circleEdge;
+	}
+	else/*非整圆圆弧*/
+	{
+		// 创建三条边
+		TopoDS_Edge E1 = BRepBuilderAPI_MakeEdge(P1, P2).Edge();
+		TopoDS_Edge E2 = BRepBuilderAPI_MakeEdge(P2, circle_center).Edge();
+		TopoDS_Edge E3 = BRepBuilderAPI_MakeEdge(circle_center, P1).Edge();
+		// 生成 Wire
+		BRepBuilderAPI_MakeWire wireMaker(E1, E2, E3);
+		TopoDS_Wire wire = wireMaker.Wire();
+		// 生成 Face
+		TopoDS_Face face = BRepBuilderAPI_MakeFace(wire).Face();
+		// 创建法线方向
+		gp_Dir Axis = GetFaceDirection(face);
+		gp_Dir Axis2 = GetFaceDirection(face);
+		//gp_Dir Axis(0, 0, 1);
+		if (cncdata.Gstatus == "G02")
+		{
+			Axis.SetZ(-1.0);
+		}
+		else if (cncdata.Gstatus == "G03")
+		{
+			Axis.SetZ(1.0);
+		}
+		// 定义圆的轴
+		gp_Ax2 CircleAxis(Location, Axis);
+		// 创建圆
+		gp_Circ Circle(CircleAxis, r);
+		// 创建圆弧
+		GC_MakeArcOfCircle ArcofCircle0(Circle, P1, P2, true);
+		 ArcofCircle1.Init(ArcofCircle0.Value());
+		 // 创建边
+		 arcEdge = ArcofCircle1.Edge();
 	}
 
-	// 创建边
-	TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(ArcofCircle.Value()).Edge();
+	
+	
 
 	// 获取曲线
 	Handle(Geom_Curve) aCurve;
 	Standard_Real ufirst, ulast;
 	aCurve = BRep_Tool::Curve(arcEdge, ufirst, ulast);
-
 	// 适配几何曲线
 	GeomAdaptor_Curve gac(aCurve, ufirst, ulast);
-
 	// 计算等间距参数
 	GCPnts_UniformAbscissa ua(gac, step);
-	if (!ua.IsDone()) 
-	{
-		std::cerr << "Error: Failed to compute arc discretization!" << std::endl;
-	}
-
 	// 获取离散点
 	int num_points = ua.NbPoints();
 	for (int i = 1; i <= num_points; ++i) {
@@ -318,34 +364,11 @@ void CncProcess::GetArcInterpolationPoints(CncPathData cncPathData,double step)
 		InterpolationPointsList.push_back(p);
 	}
 
-	
 }
 
 void CncProcess::PathSimulation(DisplayCore* displayCore)
 {
-	for (auto i:cncPathDataList)
-	{
-		if (i.pathType==Line)
-		{
-			GetLinearInterpolationPoints(i);
-		}
-		else if (i.pathType==Arc)
-		{
-			GetArcInterpolationPoints(i);
-		}
-		for (auto j: InterpolationPointsList)
-		{
-
-			Handle(Geom_Point) p = new Geom_CartesianPoint(j);
-			Handle(AIS_Point) ais_point= new AIS_Point(p);
-			auto drawer = ais_point->Attributes();
-			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
-			Handle(Prs3d_PointAspect) asp = new Prs3d_PointAspect(Aspect_TOM_POINT, acolor, 6);
-			drawer->SetPointAspect(asp);
-			ais_point->SetAttributes(drawer);
-			displayCore->Context->Display(ais_point, true);
-		}
-	}
+	DisPlayToolPath(displayCore);
 }
 
 void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
@@ -369,12 +392,13 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			GC_MakeSegment* aSegment = new GC_MakeSegment(gp_Pnt(point0[0], point0[1], point0[2]), gp_Pnt(point1[0], point1[1], point1[2]));
 			TopoDS_Edge anEdge = BRepBuilderAPI_MakeEdge(aSegment->Value()).Edge();
 			Handle(AIS_Shape) ais_line = new AIS_Shape(anEdge);
-			auto drawer = ais_line->Attributes();
-			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
-			Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
-			drawer->SetLineAspect(asp);
-			ais_line->SetAttributes(drawer);
+			//auto drawer = ais_line->Attributes();
+			Quantity_Color acolor = Quantity_Color(200.0 / 255.0, 200.0 / 255.0, 100.0 / 255.0, Quantity_TOC_RGB);
+			//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
+			//drawer->SetLineAspect(asp);
+			//ais_line->Attributes()->SetLineAspect(asp);
 			displayCore->Context->Display(ais_line, true);
+			ais_line->SetColor(acolor);
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 		}
@@ -418,11 +442,12 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 				BRepBuilderAPI_MakeEdge edge(circle);
 				TopoDS_Edge circleEdge = edge.Edge();  // 返回一个边对象
 				Handle(AIS_Shape) ais_curve = new AIS_Shape(circleEdge);
-				auto drawer = ais_curve->Attributes();
-				auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
-				Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
-				drawer->SetLineAspect(asp);
-				ais_curve->SetAttributes(drawer);
+				//auto drawer = ais_curve->Attributes();
+				Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+				//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
+				//drawer->SetLineAspect(asp);
+				//ais_curve->Attributes()->SetLineAspect(asp);
+				ais_curve->SetColor(acolor);
 				displayCore->Context->Display(ais_curve, true);
 				continue;
 			}
@@ -458,17 +483,14 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 				BRepBuilderAPI_MakeEdge ArcofCircle1(ArcofCircle0.Value());
 				TopoDS_Edge arcEdge = ArcofCircle1.Edge();
 				Handle(AIS_Shape) ais_curve = new AIS_Shape(arcEdge);
-				auto drawer = ais_curve->Attributes();
-				auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
-				Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
-				drawer->SetLineAspect(asp);
-				ais_curve->SetAttributes(drawer);
+				//auto drawer = ais_curve->Attributes();
+				Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+				//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
+				//drawer->SetLineAspect(asp);
+				//ais_curve->Attributes()->SetLineAspect(asp);
+				ais_curve->SetColor(acolor);
 				displayCore->Context->Display(ais_curve, true);
 			}
-			
-			
-			
-			// 创建圆弧边
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 			
@@ -476,6 +498,37 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 		
 	}
 
+}
+
+void CncProcess::CuttingSimulation(DisplayCore* displayCore)
+{
+	for (auto i : cncPathDataList)
+	{
+		if (i.pathType == Line)
+		{
+			GetLinearInterpolationPoints(i);
+		}
+		else if (i.pathType == Arc)
+		{
+			GetArcInterpolationPoints(i);
+		}
+		for (auto j : InterpolationPointsList)
+		{
+
+			Handle(Geom_Point) p = new Geom_CartesianPoint(j);
+			Handle(AIS_Point) ais_point = new AIS_Point(p);
+			auto drawer = ais_point->Attributes();
+			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+			Handle(Prs3d_PointAspect) asp = new Prs3d_PointAspect(Aspect_TOM_POINT, acolor, 6);
+			drawer->SetPointAspect(asp);
+			ais_point->SetAttributes(drawer);
+			displayCore->Context->Display(ais_point, true);
+			// 处理事件，确保 UI 在长时间任务过程中仍能响应
+			QApplication::processEvents();
+		}
+		// 处理事件，确保 UI 在长时间任务过程中仍能响应
+		QApplication::processEvents();
+	}
 }
 
 // Compare this snippet from CncProcess.cpp:

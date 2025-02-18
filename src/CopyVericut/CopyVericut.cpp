@@ -32,6 +32,8 @@ CopyVericut::CopyVericut(QWidget *par): QMainWindow(parent)
 	connect(ui.pushButton_2, SIGNAL(clicked()), this, SLOT(ReadCNCFile()));
 	/*路径仿真*/
 	connect(ui.pushButton_3, SIGNAL(clicked()), this, SLOT(PathSimulation()));
+	/*切削仿真*/
+	connect(ui.pushButton, SIGNAL(clicked()), this, SLOT(CuttingSimulation()));
 	setFixedSize(855, 815);
 
 }
@@ -99,9 +101,15 @@ void CopyVericut::ReadCNCFile()
 void CopyVericut::PathSimulation()
 {
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟刀路轨迹"));
-	//cncProcess->PathSimulation(renderWindow->DisplayCoreManager);
 	cncProcess->DisPlayToolPath(renderWindow->DisplayCoreManager);
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：模拟刀路轨迹完成"));
+}
+
+void CopyVericut::CuttingSimulation()
+{
+	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟切削过程"));
+	cncProcess->CuttingSimulation(renderWindow->DisplayCoreManager);
+	statusBar()->showMessage(QString::fromLocal8Bit("状态：模拟切削过程完成"));
 }
 
 void CopyVericut::Quit()

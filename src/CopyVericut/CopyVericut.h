@@ -18,6 +18,7 @@ public slots:
 	void ImportMachine();
 	void ReadCNCFile();
     void PathSimulation();
+    void CuttingSimulation();
 private:
     Ui::CopyVericutClass ui;
 	QWidget* parent;
