@@ -121,6 +121,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 			cncPathData.startPointZ = currentPointZ;
 			cncPathData.I = 0.0;
 			cncPathData.J = 0.0;
+			cncPathData.K = 0.0;
 			/*设置终点坐标*/
 			text = i.toStdString();
 			/*终点X坐标值*/
@@ -160,16 +161,28 @@ bool CncProcess::parseCNC()//解析CNC文件
 			{
 				cncPathData.I = std::stod(match[1]);
 			}
+			else
+			{
+				cncPathData.I = 0.0;
+			}
 			/*J值*/
 			if (std::regex_search(text, match, patternJ))
 			{
 				cncPathData.J = std::stod(match[1]);
+			}
+			else
+			{
+				cncPathData.J = 0.0;
 			}
 			cncPathDataList.push_back(cncPathData);
 			/*K值*/
 			if (std::regex_search(text, match, patternK))
 			{
 				cncPathData.K = std::stod(match[1]);
+			}
+			else
+			{
+				cncPathData.K = 0.0;
 			}
 			cncPathDataList.push_back(cncPathData);
 		}
@@ -380,39 +393,67 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			gp_Pnt P1(x0, y0, z0);
 			gp_Pnt P2(x, y, z);
 			// 圆心坐标
-			gp_Pnt circle_center(x0+i, y0+j, z0);
+			gp_Pnt circle_center(x0+i, y0+j, z0+k);
 			// 计算半径
-			double r = std::sqrt(std::pow(i, 2) + std::pow(j, 2));
+			double r = std::sqrt(std::pow(i, 2) + std::pow(j, 2)+ std::pow(k, 2));
 			// 使用 gp_Pnt 创建圆心坐标
 			gp_Pnt Location(circle_center.X(), circle_center.Y(), circle_center.Z());
-			// 创建三条边
-			//TopoDS_Edge E1 = BRepBuilderAPI_MakeEdge(P1, P2).Edge();
-			//TopoDS_Edge E2 = BRepBuilderAPI_MakeEdge(P2, circle_center).Edge();
-			//TopoDS_Edge E3 = BRepBuilderAPI_MakeEdge(circle_center, P1).Edge();
-			// 生成 Wire
-			//BRepBuilderAPI_MakeWire wireMaker(E1, E2, E3);
-			//TopoDS_Wire wire = wireMaker.Wire();
-			// 生成 Face
-			//TopoDS_Face face = BRepBuilderAPI_MakeFace(wire).Face();
-			// 创建法线方向
-			//gp_Dir Axis=GetFaceDirection(face);
-			gp_Dir Axis(0, 0, 1);
-			if (cncdata.Gstatus=="G02")
+			if (P1.IsEqual(P2,0.01))/*整圆*/
 			{
-				Axis.SetZ(-1.0);
+				// 创建法线方向
+				gp_Dir Axis(0, 0, 1);
+				if (cncdata.Gstatus == "G02")
+				{
+					Axis.SetZ(-1.0);
+				}
+				else if (cncdata.Gstatus == "G03")
+				{
+					Axis.SetZ(1.0);
+				}
+				// 创建一个圆 (圆心, 法向量, 半径)
+				gp_Ax2 axis(circle_center, Axis);  // 定义圆的坐标系
+				gp_Circ circle(axis, r);  // 创建圆
+
+				// 将圆转换为边 (Edge)
+				BRepBuilderAPI_MakeEdge edge(circle);
+				TopoDS_Edge circleEdge = edge.Edge();  // 返回一个边对象
+				Handle(AIS_Shape) ais_curve = new AIS_Shape(circleEdge);
+				auto drawer = ais_curve->Attributes();
+				auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+				Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
+				drawer->SetLineAspect(asp);
+				ais_curve->SetAttributes(drawer);
+				displayCore->Context->Display(ais_curve, true);
+				continue;
 			}
-			else if (cncdata.Gstatus == "G03")
+			else/*非整圆圆弧*/
 			{
-				Axis.SetZ(1.0);
-			}
-			// 定义圆的轴
-			gp_Ax2 CircleAxis(Location, Axis);
-			// 创建圆
-			gp_Circ Circle(CircleAxis, r);
-			// 创建圆弧
-			
-			if (1)
-			{
+				// 创建三条边
+				TopoDS_Edge E1 = BRepBuilderAPI_MakeEdge(P1, P2).Edge();
+				TopoDS_Edge E2 = BRepBuilderAPI_MakeEdge(P2, circle_center).Edge();
+				TopoDS_Edge E3 = BRepBuilderAPI_MakeEdge(circle_center, P1).Edge();
+				// 生成 Wire
+				BRepBuilderAPI_MakeWire wireMaker(E1, E2, E3);
+				TopoDS_Wire wire = wireMaker.Wire();
+				// 生成 Face
+				TopoDS_Face face = BRepBuilderAPI_MakeFace(wire).Face();
+				// 创建法线方向
+				gp_Dir Axis = GetFaceDirection(face);
+				gp_Dir Axis2 = GetFaceDirection(face);
+				//gp_Dir Axis(0, 0, 1);
+				if (cncdata.Gstatus == "G02")
+				{
+					Axis.SetZ(-1.0);
+				}
+				else if (cncdata.Gstatus == "G03")
+				{
+					Axis.SetZ(1.0);
+				}
+				// 定义圆的轴
+				gp_Ax2 CircleAxis(Location, Axis);
+				// 创建圆
+				gp_Circ Circle(CircleAxis, r);
+				// 创建圆弧
 				GC_MakeArcOfCircle ArcofCircle0(Circle, P1, P2, true);
 				BRepBuilderAPI_MakeEdge ArcofCircle1(ArcofCircle0.Value());
 				TopoDS_Edge arcEdge = ArcofCircle1.Edge();
@@ -424,6 +465,8 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 				ais_curve->SetAttributes(drawer);
 				displayCore->Context->Display(ais_curve, true);
 			}
+			
+			
 			
 			// 创建圆弧边
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
