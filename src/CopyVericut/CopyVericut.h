@@ -1,5 +1,5 @@
 ﻿#pragma once
-
+#include "MillSimulation.h"
 #include <QtWidgets/QMainWindow>
 #include "ui_CopyVericut.h"
 #include <RenderWindow.h>
@@ -23,5 +23,6 @@ private:
     Ui::CopyVericutClass ui;
 	QWidget* parent;
     CncProcess* cncProcess;
+	MillSimulation* millSimulation;
     RenderWindow* renderWindow;
 };

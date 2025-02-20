@@ -43,9 +43,21 @@
     <ClCompile Include="CncProcess.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MachineControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MillSimulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CncProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MachineControl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MillSimulation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

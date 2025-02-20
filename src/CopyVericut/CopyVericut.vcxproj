@@ -101,15 +101,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MillSimulation.cpp" />
     <QtRcc Include="CopyVericut.qrc" />
     <QtUic Include="CopyVericut.ui" />
     <QtMoc Include="CopyVericut.h" />
     <ClCompile Include="CncProcess.cpp" />
     <ClCompile Include="CopyVericut.cpp" />
+    <ClCompile Include="MachineControl.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CncProcess.h" />
+    <ClInclude Include="MachineControl.h" />
+    <ClInclude Include="MillSimulation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

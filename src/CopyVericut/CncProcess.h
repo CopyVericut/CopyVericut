@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <QString>
+#include <QTextBrowser>
 #include <vector>
 #include <opencascade/gp_Pnt.hxx>
 #include <opencascade/TopoDS_Face.hxx>
@@ -38,14 +39,18 @@ public:
 	bool parseCNC();
 	void GetLinearInterpolationPoints(CncPathData cncPathData,double step=0.1);
 	void GetArcInterpolationPoints(CncPathData cncPathData,double step=0.1);
-	void PathSimulation(DisplayCore *displayCore);
-	void DisPlayToolPath(DisplayCore* displayCore);
-	void CuttingSimulation(DisplayCore* displayCore);
+	void PathSimulation(DisplayCore* displayCore);//路径仿真 测试使用
+	void DisPlayToolPath(DisplayCore* displayCore);//显示刀具路径 测试使用
+	void CuttingSimulation(DisplayCore* displayCore);//切削仿真 测试使用
+	void PrintGCode(QString Gcoge);
+	void PrintGCodeColor(QString Gcode);
+	void SetTextBrowser(QTextBrowser* textBrowser);
 	gp_Dir GetFaceDirection(const TopoDS_Face& face);
 
 public:
 	vector<QString> cncContentList;
 	vector<CncPathData> cncPathDataList;
 	vector<gp_Pnt> InterpolationPointsList;//插补点
+	QTextBrowser* textBrowser;//显示G代码的文本框
 };
 

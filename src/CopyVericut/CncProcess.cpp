@@ -33,6 +33,7 @@ CncProcess::CncProcess()
 {}
 void CncProcess::ReadCncFile(QString filePath)
 {
+	textBrowser->clear();
 	/*创建 QFile 对象*/
 	QFile file(filePath); 
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {}
@@ -60,9 +61,10 @@ bool CncProcess::parseCNC()//解析CNC文件
 	std::string text;
 	CncPathData cncPathData;
 	string Gstatus{""};
-	double currentPointX{ 0.0 }, currentPointY{ 0.0 }, currentPointZ{ 100.0 }, currentI{ 0.0 }, currentJ{0.0};
+	double currentPointX{ 0.0 }, currentPointY{ 0.0 }, currentPointZ{ 10.0 }, currentI{ 0.0 }, currentJ{0.0};
 	for (auto i : cncContentList)
 	{
+		PrintGCode(i);
 		/*确定Gstatus状态*/
 		if (i.contains(QString(" G00 ")) or i.contains(QString(" G0 ")) or i.contains(QString(" G01 ")) or i.contains(QString(" G1 "))) { Gstatus = "G01/G0"; }
 		else if (i.contains(QString(" G2 ")) or i.contains(QString(" G02 "))) { Gstatus = "G02"; }
@@ -193,7 +195,13 @@ bool CncProcess::parseCNC()//解析CNC文件
 
 	}
 	qDebug() << "解析完成";
+	textBrowser->moveCursor(QTextCursor::Start);//返回到文本框的开始
 	return true;
+}
+
+void CncProcess::SetTextBrowser(QTextBrowser* textBrowser)
+{
+	this->textBrowser = textBrowser;
 }
 
 gp_Dir CncProcess::GetFaceDirection(const TopoDS_Face& face)
@@ -377,7 +385,8 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 	double point1[3] = { 0.0,0.0,0.0 };
 	for (auto cncdata : cncPathDataList)
 	{
-		if (cncdata.pathType == Line)
+		PrintGCodeColor(cncdata.Gcode.c_str());
+;		if (cncdata.pathType == Line)
 		{
 			point0[0] = cncdata.startPointX;
 			point0[1] = cncdata.startPointY;
@@ -393,7 +402,7 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 			TopoDS_Edge anEdge = BRepBuilderAPI_MakeEdge(aSegment->Value()).Edge();
 			Handle(AIS_Shape) ais_line = new AIS_Shape(anEdge);
 			//auto drawer = ais_line->Attributes();
-			Quantity_Color acolor = Quantity_Color(200.0 / 255.0, 200.0 / 255.0, 100.0 / 255.0, Quantity_TOC_RGB);
+			Quantity_Color acolor = Quantity_Color(0.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0, Quantity_TOC_RGB);
 			//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
 			//drawer->SetLineAspect(asp);
 			//ais_line->Attributes()->SetLineAspect(asp);
@@ -443,7 +452,7 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 				TopoDS_Edge circleEdge = edge.Edge();  // 返回一个边对象
 				Handle(AIS_Shape) ais_curve = new AIS_Shape(circleEdge);
 				//auto drawer = ais_curve->Attributes();
-				Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+				Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, Quantity_TOC_RGB);
 				//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
 				//drawer->SetLineAspect(asp);
 				//ais_curve->Attributes()->SetLineAspect(asp);
@@ -484,7 +493,7 @@ void CncProcess::DisPlayToolPath(DisplayCore* displayCore)
 				TopoDS_Edge arcEdge = ArcofCircle1.Edge();
 				Handle(AIS_Shape) ais_curve = new AIS_Shape(arcEdge);
 				//auto drawer = ais_curve->Attributes();
-				Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+				Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, Quantity_TOC_RGB);
 				//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
 				//drawer->SetLineAspect(asp);
 				//ais_curve->Attributes()->SetLineAspect(asp);
@@ -518,7 +527,7 @@ void CncProcess::CuttingSimulation(DisplayCore* displayCore)
 			Handle(Geom_Point) p = new Geom_CartesianPoint(j);
 			Handle(AIS_Point) ais_point = new AIS_Point(p);
 			auto drawer = ais_point->Attributes();
-			auto acolor = Quantity_Color(255.0 / 255.0, 200.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
+			auto acolor = Quantity_Color(65.0 / 255.0, 15.0 / 255.0, 135.0 / 255.0, Quantity_TOC_RGB);
 			Handle(Prs3d_PointAspect) asp = new Prs3d_PointAspect(Aspect_TOM_POINT, acolor, 6);
 			drawer->SetPointAspect(asp);
 			ais_point->SetAttributes(drawer);
@@ -529,6 +538,21 @@ void CncProcess::CuttingSimulation(DisplayCore* displayCore)
 		// 处理事件，确保 UI 在长时间任务过程中仍能响应
 		QApplication::processEvents();
 	}
+}
+
+void CncProcess::PrintGCode(QString Gcoge)
+{
+	textBrowser->append(Gcoge);
+}
+
+void CncProcess::PrintGCodeColor(QString Gcode)
+{
+	QTextCursor cursor(textBrowser->textCursor());
+	cursor.movePosition(QTextCursor::Down);  // 向下移动一行
+	textBrowser->setTextCursor(cursor);  // 更新光标位置
+	//QTextBlockFormat blockFormat;
+	//blockFormat.setBackground(QBrush(Qt::yellow));
+	//cursor.mergeBlockFormat(blockFormat);
 }
 
 // Compare this snippet from CncProcess.cpp:

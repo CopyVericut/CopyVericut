@@ -12,6 +12,9 @@ CopyVericut::CopyVericut(QWidget *par): QMainWindow(parent)
 	parent = par;
     ui.setupUi(this);
 	cncProcess = new CncProcess();
+	cncProcess->SetTextBrowser(ui.textBrowser);
+	millSimulation = new MillSimulation();
+	millSimulation->SetTextBrowser(ui.textBrowser);
 	renderWindow = new RenderWindow(parent);
 	ui.tabWidget->addTab(renderWindow->myOccView, QString::fromLocal8Bit("渲染仿真窗口"));
 	/*视角转换*/
