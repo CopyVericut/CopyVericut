@@ -16,6 +16,7 @@ CopyVericut::CopyVericut(QWidget *par): QMainWindow(parent)
 	millSimulation = new MillSimulation();
 	millSimulation->SetTextBrowser(ui.textBrowser);
 	renderWindow = new RenderWindow(parent);
+	millSimulation->SetDisPlayCore(renderWindow->DisplayCoreManager);
 	ui.tabWidget->addTab(renderWindow->myOccView, QString::fromLocal8Bit("渲染仿真窗口"));
 	/*视角转换*/
 	connect(ui.actionView_Top, SIGNAL(triggered()), renderWindow->myOccView, SLOT(View_Top()));
@@ -103,8 +104,9 @@ void CopyVericut::ReadCNCFile()
 
 void CopyVericut::PathSimulation()
 {
+	millSimulation->SetCncPathDataList(cncProcess->cncPathDataList);
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟刀路轨迹"));
-	cncProcess->DisPlayToolPath(renderWindow->DisplayCoreManager);
+	millSimulation->DisPlayToolPath();
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：模拟刀路轨迹完成"));
 }
 

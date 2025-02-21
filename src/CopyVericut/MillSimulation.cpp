@@ -35,6 +35,23 @@ MillSimulation::MillSimulation()
 {
 }
 
+void MillSimulation::CreateBlankShape(double L, double W, double H)
+{
+		//#self.Delete_Blank()
+		//L = float(self.lineEdit_8.text())
+		//W = float(self.lineEdit_9.text())
+		//H = float(self.lineEdit_10.text())
+		//self.Blank = BRepPrimAPI_MakeBox(L, W, H).Shape()
+		//self.Blank = TopoDS_Shape(self.Blank)
+		//T = gp_Trsf()
+		//location_X = -L / 2 # 把键槽移动到合适的位置
+		//location_Y = -W / 2  # 把键槽移动到合适的位置
+		//T.SetTranslation(gp_Vec(location_X, location_Y, 0))
+		//loc = TopLoc_Location(T)
+		//self.Blank.Location(loc)
+		//self.show_Blank = self.canva._display.DisplayShape(self.Blank, transparency = 0.5, update = True)
+}
+
 void MillSimulation::SetBlankShape(TopoDS_Shape BlankShape)
 {
 }
@@ -63,6 +80,10 @@ void MillSimulation::SetCncPathDataList(vector<CncPathData> acncPathDataList)
 void MillSimulation::SetTextBrowser(QTextBrowser* textBrowser)
 {
 	this->textBrowser = textBrowser;
+}
+
+void MillSimulation::RefreshBlankShape()
+{
 }
 
 void MillSimulation::PathSimulation()
