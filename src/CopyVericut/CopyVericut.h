@@ -19,6 +19,8 @@ public slots:
 	void ReadCNCFile();
     void PathSimulation();
     void CuttingSimulation();
+    void CreateBlankShape();
+    void ResetBlankShape();
 private:
     Ui::CopyVericutClass ui;
 	QWidget* parent;

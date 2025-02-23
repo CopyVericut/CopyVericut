@@ -30,26 +30,27 @@
 #include <opencascade/BRepBuilderAPI_MakeWire.hxx>
 #include <opencascade/TopoDS_Wire.hxx>
 #include <opencascade/BRepBuilderAPI_MakeFace.hxx>
-
+#include <opencascade/BRepPrimAPI_MakeBox.hxx>
+#include <opencascade/gp_Trsf.hxx>
+#include <opencascade/TopLoc_Location.hxx>
 MillSimulation::MillSimulation()
 {
 }
 
 void MillSimulation::CreateBlankShape(double L, double W, double H)
 {
-		//#self.Delete_Blank()
-		//L = float(self.lineEdit_8.text())
-		//W = float(self.lineEdit_9.text())
-		//H = float(self.lineEdit_10.text())
-		//self.Blank = BRepPrimAPI_MakeBox(L, W, H).Shape()
-		//self.Blank = TopoDS_Shape(self.Blank)
-		//T = gp_Trsf()
-		//location_X = -L / 2 # 把键槽移动到合适的位置
-		//location_Y = -W / 2  # 把键槽移动到合适的位置
-		//T.SetTranslation(gp_Vec(location_X, location_Y, 0))
-		//loc = TopLoc_Location(T)
-		//self.Blank.Location(loc)
-		//self.show_Blank = self.canva._display.DisplayShape(self.Blank, transparency = 0.5, update = True)
+		BlankShape = BRepPrimAPI_MakeBox(L, W, H).Shape();
+		gp_Trsf T;
+		double locationX = -L / 2;//把键槽移动到合适的位置
+		double locationY = -W / 2;//把键槽移动到合适的位置
+		T.SetTranslation(gp_Vec(locationX, locationY, 0));
+		TopLoc_Location loc = TopLoc_Location(T);
+		BlankShape.Location(loc);
+}
+
+void MillSimulation::CreateToolShape(double length, double diameter)
+{
+
 }
 
 void MillSimulation::SetBlankShape(TopoDS_Shape BlankShape)
@@ -84,6 +85,29 @@ void MillSimulation::SetTextBrowser(QTextBrowser* textBrowser)
 
 void MillSimulation::RefreshBlankShape()
 {
+}
+
+void MillSimulation::DisPlayBlankShape()
+{
+	
+	Quantity_Color color(0.5, 0.6, 0.7, Quantity_TOC_RGB);
+	if (!BlankShape.IsNull())
+	{
+		displayCore->DisplayShape(BlankShape, color, 1, "blank");
+		BlankAis_shape = displayCore->ShapeManeger["blank"]->AisShape;
+	}
+	
+
+}
+
+void MillSimulation::ResetBlankShape()
+{
+	if (!BlankAis_shape.IsNull())
+	{
+		BlankAis_shape->SetShape(BlankShape);
+		BlankAis_shape->Redisplay(true);
+		displayCore->Context ->UpdateCurrentViewer();
+	}
 }
 
 void MillSimulation::PathSimulation()

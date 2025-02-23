@@ -38,6 +38,10 @@ CopyVericut::CopyVericut(QWidget *par): QMainWindow(parent)
 	connect(ui.pushButton_3, SIGNAL(clicked()), this, SLOT(PathSimulation()));
 	/*切削仿真*/
 	connect(ui.pushButton, SIGNAL(clicked()), this, SLOT(CuttingSimulation()));
+	/*生成毛坯*/
+	connect(ui.pushButton_5, SIGNAL(clicked()), this, SLOT(CreateBlankShape()));
+	/*重置毛坯*/
+	connect(ui.pushButton_6, SIGNAL(clicked()), this, SLOT(ResetBlankShape()));
 	setFixedSize(855, 815);
 
 }
@@ -115,6 +119,25 @@ void CopyVericut::CuttingSimulation()
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟切削过程"));
 	cncProcess->CuttingSimulation(renderWindow->DisplayCoreManager);
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：模拟切削过程完成"));
+}
+
+void CopyVericut::CreateBlankShape()
+{
+	double L = ui.lineEdit_8->text().toDouble();
+	double W = ui.lineEdit_9->text().toDouble();
+	double H = ui.lineEdit_10->text().toDouble();
+	millSimulation->CreateBlankShape(L, W, H);
+	millSimulation->DisPlayBlankShape();
+
+}
+
+void CopyVericut::ResetBlankShape()
+{
+	double L = ui.lineEdit_8->text().toDouble();
+	double W = ui.lineEdit_9->text().toDouble();
+	double H = ui.lineEdit_10->text().toDouble();
+	millSimulation->CreateBlankShape(L, W, H);
+	millSimulation->ResetBlankShape();
 }
 
 void CopyVericut::Quit()

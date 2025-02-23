@@ -137,20 +137,40 @@ void TubeNext::DisplayCore::DisplayShape(TopoDS_Shape shape, Quantity_Color colo
 }
 
 
-
+/*线型显示*/
 void TubeNext::DisplayCore::DisplayShape(TopoDS_Shape theshape, Aspect_TypeOfLine theType, Quantity_Color color, Standard_Integer LineWidth, string shapeLable, Standard_Boolean theToUpdateViewer)
 {
+
 	Handle(AIS_Shape) ais_shape = new AIS_Shape(theshape);
 	/*设置显色*/
 	ais_shape->SetColor(color);
 	/*设置线宽*/
 	ais_shape->SetWidth(LineWidth);
-	//ais_shape->SetDisplayMode((int)AIS_DisplayMode::AIS_Shaded);
+	ais_shape->SetDisplayMode((int)AIS_DisplayMode::AIS_Shaded);
 	auto drawer = ais_shape->Attributes();
 	//drawer->SetFaceBoundaryDraw(true);
 	Handle(Prs3d_LineAspect) aspect = new Prs3d_LineAspect(color, theType, LineWidth);
 	drawer->SetLineAspect(aspect);
 	ais_shape->Attributes()->SetLineAspect(aspect);
+	ais_shape->SetHilightMode(1);
+	Context->Display(ais_shape, Standard_True);
+	ShapeManeger[shapeLable] = new shape(ais_shape);
+}
+/*线型显示*/
+void TubeNext::DisplayCore::DisplayShape(TopoDS_Shape ashape, Quantity_Color color, Standard_Integer LineWidth, string shapeLable, Standard_Boolean theToUpdateViewer)
+{
+	Handle(AIS_Shape) ais_shape = new AIS_Shape(ashape);
+	ais_shape->SetMaterial(Graphic3d_MaterialAspect(Graphic3d_NOM_STEEL));
+	//Set Display color 
+	ais_shape->SetColor(color);
+	// Set Display mode
+	ais_shape->SetDisplayMode((int)AIS_DisplayMode::AIS_Shaded);
+	// Set Edge Color
+	auto drawer = ais_shape->Attributes();
+	drawer->SetFaceBoundaryDraw(true);
+	Handle(Prs3d_LineAspect) aspect = new Prs3d_LineAspect(Quantity_NOC_BLACK, Aspect_TOL_SOLID, 1.0);
+	drawer->SetFaceBoundaryAspect(aspect);
+	//设置高亮模式
 	ais_shape->SetHilightMode(1);
 	Context->Display(ais_shape, Standard_True);
 	ShapeManeger[shapeLable] = new shape(ais_shape);
