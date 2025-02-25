@@ -37,8 +37,8 @@ public:
 public:
 	void ReadCncFile(QString filePath);
 	bool parseCNC();
-	void GetLinearInterpolationPoints(CncPathData cncPathData,double step=0.1);
-	void GetArcInterpolationPoints(CncPathData cncPathData,double step=0.1);
+	vector<gp_Pnt> GetLinearInterpolationPoints(CncPathData cncPathData,double step=0.1);
+	vector<gp_Pnt> GetArcInterpolationPoints(CncPathData cncPathData,double step=0.1);
 	void PathSimulation(DisplayCore* displayCore);//路径仿真 测试使用
 	void DisPlayToolPath(DisplayCore* displayCore);//显示刀具路径 测试使用
 	void CuttingSimulation(DisplayCore* displayCore);//切削仿真 测试使用

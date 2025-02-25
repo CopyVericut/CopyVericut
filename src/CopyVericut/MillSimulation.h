@@ -5,6 +5,7 @@
 #include "CncProcess.h"
 #include <opencascade/Standard_Handle.hxx>
 #include <opencascade/AIS_Shape.hxx>
+#include "MachineControl.h"
 using namespace TubeNext;
 class MillSimulation
 {
@@ -42,6 +43,7 @@ public:
 	vector<CncPathData> cncPathDataList;
 	vector<gp_Pnt> InterpolationPointsList;//插补点
 	QTextBrowser* textBrowser;//显示G代码的文本框
+	MachineControl* machineControl;//机床控制
 public://切削参数
 	double CuttingSpeed = 0.0;//切削速度
 	double CuttingFeed = 0.0;//切削进给

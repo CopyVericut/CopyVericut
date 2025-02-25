@@ -33,8 +33,10 @@
 #include <opencascade/BRepPrimAPI_MakeBox.hxx>
 #include <opencascade/gp_Trsf.hxx>
 #include <opencascade/TopLoc_Location.hxx>
+#include "MachineControl.h"
 MillSimulation::MillSimulation()
 {
+	machineControl = new MachineControl();
 }
 
 void MillSimulation::CreateBlankShape(double L, double W, double H)
@@ -117,19 +119,21 @@ void MillSimulation::PathSimulation()
 
 void MillSimulation::CuttingSimulation()
 {
+	vector<gp_Pnt> InterpolationPointsList;
 	for (auto i : cncPathDataList)
 	{
 		if (i.pathType == Line)
 		{
-			CncProcess().GetLinearInterpolationPoints(i);
+			InterpolationPointsList=CncProcess().GetLinearInterpolationPoints(i);
 		}
 		else if (i.pathType == Arc)
 		{
-			CncProcess().GetArcInterpolationPoints(i);
+			InterpolationPointsList=CncProcess().GetArcInterpolationPoints(i);
 		}
+
 		for (auto j : InterpolationPointsList)
 		{
-
+			/*
 			Handle(Geom_Point) p = new Geom_CartesianPoint(j);
 			Handle(AIS_Point) ais_point = new AIS_Point(p);
 			auto drawer = ais_point->Attributes();
@@ -138,6 +142,13 @@ void MillSimulation::CuttingSimulation()
 			drawer->SetPointAspect(asp);
 			ais_point->SetAttributes(drawer);
 			displayCore->Context->Display(ais_point, true);
+			*/
+			//machineControl->MachineSpindleMove(j.X(),j.Y(),j.Z());
+			gp_Trsf T;
+			T.SetTranslation(gp_Vec(j.X(), j.Y(), j.Z()));
+			TopLoc_Location loc = TopLoc_Location(T);
+			displayCore->Context->SetLocation(displayCore->ShapeManeger["Machine_spindle"]->AisShape, T);
+			displayCore->Context->UpdateCurrentViewer();
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 		}

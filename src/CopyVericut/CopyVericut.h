@@ -4,6 +4,7 @@
 #include "ui_CopyVericut.h"
 #include <RenderWindow.h>
 #include <CncProcess.h>
+#include "MachineControl.h"
 using namespace TubeNext;
 class CopyVericut : public QMainWindow
 {
@@ -21,10 +22,12 @@ public slots:
     void CuttingSimulation();
     void CreateBlankShape();
     void ResetBlankShape();
+	void Clear();   
 private:
     Ui::CopyVericutClass ui;
 	QWidget* parent;
     CncProcess* cncProcess;
 	MillSimulation* millSimulation;
     RenderWindow* renderWindow;
+	
 };

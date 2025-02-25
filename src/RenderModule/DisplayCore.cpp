@@ -217,9 +217,9 @@ int TubeNext::DisplayCore::Read_step_file(string filepath,string filename)
 
 	// 获取转换后的形状
 	TopoDS_Shape topods_shape = reader.OneShape();
-	Handle(AIS_Shape) ais_shape = new AIS_Shape(topods_shape);
-	this->ShapeManeger[filename] = new shape(ais_shape);
-	this->DisplayShape(topods_shape, color, 1);
+	//Handle(AIS_Shape) ais_shape = new AIS_Shape(topods_shape);
+	//this->ShapeManeger[filename] = new shape(ais_shape);
+	this->DisplayShape(topods_shape, color, 1, filename);
 
 	return 0;
 }

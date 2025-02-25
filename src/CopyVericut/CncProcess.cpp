@@ -227,7 +227,7 @@ gp_Dir CncProcess::GetFaceDirection(const TopoDS_Face& face)
 	}
 }
 
-void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double step)
+vector<gp_Pnt> CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double step)
 {
 	InterpolationPointsList.clear();
 	gp_Pnt aPnt1 = gp_Pnt(cncPathData.startPointX, cncPathData.startPointY, cncPathData.startPointZ);//起点
@@ -270,10 +270,10 @@ void CncProcess::GetLinearInterpolationPoints(CncPathData cncPathData, double st
 	}
 	
 
-	
+	return InterpolationPointsList;
 }
 
-void CncProcess::GetArcInterpolationPoints(CncPathData cncdata,double step)
+vector<gp_Pnt> CncProcess::GetArcInterpolationPoints(CncPathData cncdata,double step)
 {
 	InterpolationPointsList.clear();
 	double i = cncdata.I;
@@ -371,7 +371,7 @@ void CncProcess::GetArcInterpolationPoints(CncPathData cncdata,double step)
 		aCurve->D0(ua.Parameter(i), p);
 		InterpolationPointsList.push_back(p);
 	}
-
+	return InterpolationPointsList;
 }
 
 void CncProcess::PathSimulation(DisplayCore* displayCore)
