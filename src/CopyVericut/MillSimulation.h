@@ -22,7 +22,8 @@ public:
 	void PathSimulation();
 	void CuttingSimulation();
 	void PrintGCode(QString Gcoge);
-	void DisPlayToolPath();
+	void DisPlayToolPaths();//显示全部路径
+	void DisPlayToolPath(CncPathData cncPathData);//显示单段路径
 	void SetDisPlayCore(DisplayCore* displayCore);
 	void SetCncPathDataList(vector<CncPathData> acncPathDataList);
 	void SetTextBrowser(QTextBrowser* textBrowser);

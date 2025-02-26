@@ -115,7 +115,7 @@ void CopyVericut::PathSimulation()
 {
 	millSimulation->SetCncPathDataList(cncProcess->cncPathDataList);
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟刀路轨迹"));
-	millSimulation->DisPlayToolPath();
+	millSimulation->DisPlayToolPaths();
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：模拟刀路轨迹完成"));
 }
 

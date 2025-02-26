@@ -1,8 +1,14 @@
 ﻿#include "MachineControl.h"
-
+#include "DisplayCore.h"
+using namespace TubeNext;
 MachineControl::MachineControl()
 {
+	
+}
 
+void MachineControl::SetDisPlayCore(DisplayCore* adisplayCore)
+{
+	displayCore = adisplayCore;
 }
 
 void MachineControl::SetMachineWorkTable(Handle(AIS_Shape) MachineWorkTable)
@@ -22,9 +28,8 @@ void MachineControl::MachineSpindleMove(double x,double y,double z)
 	gp_Trsf T;
 	T.SetTranslation(gp_Vec(x, y, z));
 	TopLoc_Location loc = TopLoc_Location(T);
-	machineSpindleShape.Location(loc);
-	machineSpindleAis_shape->SetShape(machineSpindleShape);
-	//qDebug() >> x >> y >> z;
+	displayCore->Context->SetLocation(machineSpindleAis_shape, T);
+	displayCore->Context->UpdateCurrentViewer();
 
 }
 
