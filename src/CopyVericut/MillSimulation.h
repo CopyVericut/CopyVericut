@@ -15,6 +15,7 @@ public:
 public:
 	void CreateBlankShape(double L,double W,double H);
 	void CreateToolShape(double length,double diameter);
+	void CreateToolShape();
 	void SetBlankShape(TopoDS_Shape BlankShape);
 	void SetWorkPieceShape(TopoDS_Shape WorkPieceShape);
 	void SetToolPathShape(TopoDS_Shape ToolPathShape);
@@ -32,10 +33,12 @@ public:
 	void ResetBlankShape();
 
 public:
+	TopoDS_Shape CuttingToolShape;
 	TopoDS_Shape BlankShape;
 	TopoDS_Shape WorkPieceShape;
 	TopoDS_Shape ToolPathShape;
 	TopoDS_Shape ToolSweepShape;
+	Handle(AIS_Shape) CuttingToolAis_shape { nullptr };
 	Handle(AIS_Shape) BlankAis_shape {nullptr};
 	Handle(AIS_Shape) WorkPieceAis_shape { nullptr };
 	Handle(AIS_Shape) ToolPathAis_shape { nullptr };
@@ -50,5 +53,6 @@ public://切削参数
 	double CuttingFeed = 0.0;//切削进给
 	double CuttingDepth = 0.0;//切削深度
 	double CuttingToolDiameter = 0.0;//刀具直径
+	double CuttingToolLength=0;
 };
 

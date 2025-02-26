@@ -22,6 +22,7 @@ public slots:
     void CuttingSimulation();
     void CreateBlankShape();
     void ResetBlankShape();
+    void SetCuttingTool();
 	void Clear();   
 private:
     Ui::CopyVericutClass ui;

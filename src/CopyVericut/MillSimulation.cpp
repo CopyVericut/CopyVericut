@@ -33,7 +33,9 @@
 #include <opencascade/BRepPrimAPI_MakeBox.hxx>
 #include <opencascade/gp_Trsf.hxx>
 #include <opencascade/TopLoc_Location.hxx>
+#include <opencascade/BRepPrimAPI_MakeCylinder.hxx>
 #include "MachineControl.h"
+
 MillSimulation::MillSimulation()
 {
 	machineControl = new MachineControl();
@@ -52,7 +54,30 @@ void MillSimulation::CreateBlankShape(double L, double W, double H)
 
 void MillSimulation::CreateToolShape(double length, double diameter)
 {
+	double radius = diameter/2.0;
+	double height = length;
+	// 创建圆柱的轴线 (gp_Ax2)
+	gp_Pnt origin(0.0, 0.0, 0.0);  // 圆柱的基准点 (原点)
+	gp_Dir direction(0.0, 0.0, 1.0);  // 圆柱的方向 (Z轴方向)
+	gp_Ax2 axis(origin, direction);  // 创建轴线
+	// 使用 BRepPrimAPI_MakeCylinder 创建圆柱
+	BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
+	// 获取圆柱对象
+	 CuttingToolShape = cylinderMaker.Shape();
+}
 
+void MillSimulation::CreateToolShape()
+{
+	double radius = CuttingToolDiameter / 2.0;
+	double height = CuttingToolLength;
+	// 创建圆柱的轴线 (gp_Ax2)
+	gp_Pnt origin(0.0, 0.0, 0.0);  // 圆柱的基准点 (原点)
+	gp_Dir direction(0.0, 0.0, 1.0);  // 圆柱的方向 (Z轴方向)
+	gp_Ax2 axis(origin, direction);  // 创建轴线
+	// 使用 BRepPrimAPI_MakeCylinder 创建圆柱
+	BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
+	// 获取圆柱对象
+	CuttingToolShape = cylinderMaker.Shape();
 }
 
 void MillSimulation::SetBlankShape(TopoDS_Shape BlankShape)
@@ -121,6 +146,8 @@ void MillSimulation::PathSimulation()
 void MillSimulation::CuttingSimulation()
 {
 	vector<gp_Pnt> InterpolationPointsList;
+	/*根据参数生成刀具*/
+	CreateToolShape();
 	for (auto i : cncPathDataList)
 	{
 		if (i.pathType == Line)
@@ -134,8 +161,12 @@ void MillSimulation::CuttingSimulation()
 		DisPlayToolPath(i);
 		for (auto j : InterpolationPointsList)
 		{
-			
+			/*主轴运动*/
 			machineControl->MachineSpindleMove(j.X(),j.Y(),j.Z());
+			/*刀具切削*/
+			gp_Trsf T;
+			T.SetTranslation(gp_Vec(j.X(), j.Y(), j.Z()));
+			TopLoc_Location loc = TopLoc_Location(T);
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 		}

@@ -146,6 +146,12 @@ void CopyVericut::ResetBlankShape()
 	millSimulation->ResetBlankShape();
 }
 
+void CopyVericut::SetCuttingTool()
+{
+	millSimulation->CuttingToolDiameter = ui.lineEdit->text().toDouble();
+	millSimulation->CuttingToolLength= ui.lineEdit_5->text().toDouble();
+}
+
 void CopyVericut::Clear()
 {
 	renderWindow->DisplayCoreManager->Context->Remove(renderWindow->DisplayCoreManager->ShapeManeger["Machine_spindle"]->AisShape, 1);
