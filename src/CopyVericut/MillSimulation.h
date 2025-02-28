@@ -28,6 +28,7 @@ public:
 	void SetDisPlayCore(DisplayCore* displayCore);
 	void SetCncPathDataList(vector<CncPathData> acncPathDataList);
 	void SetTextBrowser(QTextBrowser* textBrowser);
+	void Cutting(double x, double y, double z);
 	void RefreshBlankShape();
 	void DisPlayBlankShape();
 	void ResetBlankShape();
@@ -54,5 +55,7 @@ public://切削参数
 	double CuttingDepth = 0.0;//切削深度
 	double CuttingToolDiameter = 0.0;//刀具直径
 	double CuttingToolLength=0;
+	double offsetZ{ 0 };
+
 };
 

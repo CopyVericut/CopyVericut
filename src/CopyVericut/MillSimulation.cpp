@@ -34,6 +34,8 @@
 #include <opencascade/gp_Trsf.hxx>
 #include <opencascade/TopLoc_Location.hxx>
 #include <opencascade/BRepPrimAPI_MakeCylinder.hxx>
+#include <opencascade/BRepAlgoAPI_BooleanOperation.hxx>
+#include <opencascade/BRepAlgoAPI_Cut.hxx>
 #include "MachineControl.h"
 
 MillSimulation::MillSimulation()
@@ -50,6 +52,8 @@ void MillSimulation::CreateBlankShape(double L, double W, double H)
 		T.SetTranslation(gp_Vec(locationX, locationY, 0));
 		TopLoc_Location loc = TopLoc_Location(T);
 		BlankShape.Location(loc);
+		offsetZ = H;
+		CreateToolShape();
 }
 
 void MillSimulation::CreateToolShape(double length, double diameter)
@@ -64,6 +68,7 @@ void MillSimulation::CreateToolShape(double length, double diameter)
 	BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
 	// 获取圆柱对象
 	 CuttingToolShape = cylinderMaker.Shape();
+	
 }
 
 void MillSimulation::CreateToolShape()
@@ -78,6 +83,17 @@ void MillSimulation::CreateToolShape()
 	BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
 	// 获取圆柱对象
 	CuttingToolShape = cylinderMaker.Shape();
+	/*刀具移动*/
+	gp_Trsf T;
+	T.SetTranslation(gp_Vec(0, 0, 100 + offsetZ));
+	TopLoc_Location loc = TopLoc_Location(T);
+	CuttingToolShape.Located(loc);
+	// 刀具显示
+	Handle(AIS_Shape) CuttingToolAis_shape = new AIS_Shape(CuttingToolShape);
+	Quantity_Color color(0.4, 0.3, 0.3, Quantity_TOC_RGB);
+	CuttingToolAis_shape->SetColor(color);
+	displayCore->Context->Display(CuttingToolAis_shape, true);
+	displayCore->Context->UpdateCurrentViewer();
 }
 
 void MillSimulation::SetBlankShape(TopoDS_Shape BlankShape)
@@ -111,8 +127,26 @@ void MillSimulation::SetTextBrowser(QTextBrowser* textBrowser)
 	this->textBrowser = textBrowser;
 }
 
+void MillSimulation::Cutting(double x,double y,double z)
+{
+	gp_Trsf T;
+	T.SetTranslation(gp_Vec(x,y,z));
+	TopLoc_Location loc = TopLoc_Location(T);
+	CuttingToolShape.Located(loc);
+	// 进行布尔减操作，减去圆柱体
+	BRepAlgoAPI_Cut cut(BlankShape, CuttingToolShape);
+	cut.Build();  // 执行布尔减操作
+	// 获取减去操作后的结果
+	TopoDS_Shape result = cut.Shape();
+	BlankAis_shape->SetShape(result);
+	displayCore->Context->Redisplay(BlankAis_shape,true,false);
+	displayCore->Context->UpdateCurrentViewer();
+}
+
 void MillSimulation::RefreshBlankShape()
 {
+	displayCore->Context->Redisplay(BlankAis_shape, true, false);
+	displayCore->Context->UpdateCurrentViewer();
 }
 
 void MillSimulation::DisPlayBlankShape()
@@ -152,21 +186,20 @@ void MillSimulation::CuttingSimulation()
 	{
 		if (i.pathType == Line)
 		{
-			InterpolationPointsList=CncProcess().GetLinearInterpolationPoints(i);
+			InterpolationPointsList=CncProcess().GetLinearInterpolationPoints(i,0.1);
 		}
 		else if (i.pathType == Arc)
 		{
-			InterpolationPointsList=CncProcess().GetArcInterpolationPoints(i);
+			InterpolationPointsList=CncProcess().GetArcInterpolationPoints(i,0.1);
 		}
+		/*显示此段路径*/
 		DisPlayToolPath(i);
 		for (auto j : InterpolationPointsList)
 		{
 			/*主轴运动*/
-			machineControl->MachineSpindleMove(j.X(),j.Y(),j.Z());
+			machineControl->MachineSpindleMove(j.X(),j.Y(),j.Z()+offsetZ);
 			/*刀具切削*/
-			gp_Trsf T;
-			T.SetTranslation(gp_Vec(j.X(), j.Y(), j.Z()));
-			TopLoc_Location loc = TopLoc_Location(T);
+			Cutting(j.X(), j.Y(), j.Z()+offsetZ);
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 		}

@@ -64,7 +64,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 	double currentPointX{ 0.0 }, currentPointY{ 0.0 }, currentPointZ{ 10.0 }, currentI{ 0.0 }, currentJ{0.0};
 	for (auto i : cncContentList)
 	{
-		PrintGCode(i);
+		//PrintGCode(i);
 		/*确定Gstatus状态*/
 		if (i.contains(QString(" G00 ")) or i.contains(QString(" G0 ")) or i.contains(QString(" G01 ")) or i.contains(QString(" G1 "))) { Gstatus = "G01/G0"; }
 		else if (i.contains(QString(" G2 ")) or i.contains(QString(" G02 "))) { Gstatus = "G02"; }

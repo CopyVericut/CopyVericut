@@ -91,6 +91,8 @@ void CopyVericut::ImportMachine()
 	/*设置机床工作台和主轴*/
 	millSimulation->machineControl->SetMachineWorkTable(renderWindow->DisplayCoreManager->ShapeManeger["Machine_work_table"]->AisShape);
 	millSimulation->machineControl->SetMachineSpindle(renderWindow->DisplayCoreManager->ShapeManeger["Machine_spindle"]->AisShape);
+	/*机床回安全高度*/
+	millSimulation->machineControl->MachineSpindleMove(0, 0, 100);
 
 }
 
@@ -121,6 +123,7 @@ void CopyVericut::PathSimulation()
 
 void CopyVericut::CuttingSimulation()
 {
+	
 	millSimulation->SetCncPathDataList(cncProcess->cncPathDataList);
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟切削过程"));
 	millSimulation->CuttingSimulation();
@@ -129,12 +132,13 @@ void CopyVericut::CuttingSimulation()
 
 void CopyVericut::CreateBlankShape()
 {
+	SetCuttingTool();
 	double L = ui.lineEdit_8->text().toDouble();
 	double W = ui.lineEdit_9->text().toDouble();
 	double H = ui.lineEdit_10->text().toDouble();
 	millSimulation->CreateBlankShape(L, W, H);
 	millSimulation->DisPlayBlankShape();
-
+	
 }
 
 void CopyVericut::ResetBlankShape()
@@ -150,6 +154,7 @@ void CopyVericut::SetCuttingTool()
 {
 	millSimulation->CuttingToolDiameter = ui.lineEdit->text().toDouble();
 	millSimulation->CuttingToolLength= ui.lineEdit_5->text().toDouble();
+
 }
 
 void CopyVericut::Clear()
