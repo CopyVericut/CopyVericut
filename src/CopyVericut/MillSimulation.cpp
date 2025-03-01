@@ -83,17 +83,7 @@ void MillSimulation::CreateToolShape()
 	BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
 	// 获取圆柱对象
 	CuttingToolShape = cylinderMaker.Shape();
-	/*刀具移动*/
-	gp_Trsf T;
-	T.SetTranslation(gp_Vec(0, 0, 100 + offsetZ));
-	TopLoc_Location loc = TopLoc_Location(T);
-	CuttingToolShape.Located(loc);
-	// 刀具显示
-	Handle(AIS_Shape) CuttingToolAis_shape = new AIS_Shape(CuttingToolShape);
-	Quantity_Color color(0.4, 0.3, 0.3, Quantity_TOC_RGB);
-	CuttingToolAis_shape->SetColor(color);
-	displayCore->Context->Display(CuttingToolAis_shape, true);
-	displayCore->Context->UpdateCurrentViewer();
+	
 }
 
 void MillSimulation::SetBlankShape(TopoDS_Shape BlankShape)
@@ -129,18 +119,32 @@ void MillSimulation::SetTextBrowser(QTextBrowser* textBrowser)
 
 void MillSimulation::Cutting(double x,double y,double z)
 {
-	gp_Trsf T;
-	T.SetTranslation(gp_Vec(x,y,z));
-	TopLoc_Location loc = TopLoc_Location(T);
-	CuttingToolShape.Located(loc);
+	//gp_Trsf T;
+	//T.SetTranslation(gp_Vec(x,y,z));
+	//TopLoc_Location loc = TopLoc_Location(T);
+	//CuttingToolShape.Located(loc);
 	// 进行布尔减操作，减去圆柱体
-	BRepAlgoAPI_Cut cut(BlankShape, CuttingToolShape);
-	cut.Build();  // 执行布尔减操作
-	// 获取减去操作后的结果
-	TopoDS_Shape result = cut.Shape();
-	BlankAis_shape->SetShape(result);
-	displayCore->Context->Redisplay(BlankAis_shape,true,false);
-	displayCore->Context->UpdateCurrentViewer();
+
+	double radius = CuttingToolDiameter / 2.0;
+	double height = CuttingToolLength;
+	 //创建圆柱的轴线 (gp_Ax2)
+	gp_Pnt origin(x, y, z);  // 圆柱的基准点 (原点)
+	gp_Dir direction(0.0, 0.0, 1.0);  // 圆柱的方向 (Z轴方向)
+	gp_Ax2 axis(origin, direction);  // 创建轴线
+	// 使用 BRepPrimAPI_MakeCylinder 创建圆柱
+	CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
+	cut= BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
+	if (cut.IsDone())
+	{
+		cut.Build();  // 执行布尔减操作
+		cut.SimplifyResult();  // 简化结果
+		// 获取减去操作后的结果
+		BlankShape = cut.Shape();
+		BlankAis_shape->SetShape(BlankShape);
+		displayCore->Context->Redisplay(BlankAis_shape, true, false);
+		displayCore->Context->UpdateCurrentViewer();
+	}
+	
 }
 
 void MillSimulation::RefreshBlankShape()

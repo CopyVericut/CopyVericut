@@ -6,6 +6,7 @@
 #include <opencascade/Standard_Handle.hxx>
 #include <opencascade/AIS_Shape.hxx>
 #include "MachineControl.h"
+#include <opencascade/BRepAlgoAPI_Cut.hxx>
 using namespace TubeNext;
 class MillSimulation
 {
@@ -56,6 +57,6 @@ public://切削参数
 	double CuttingToolDiameter = 0.0;//刀具直径
 	double CuttingToolLength=0;
 	double offsetZ{ 0 };
-
+	BRepAlgoAPI_Cut cut;
 };
 

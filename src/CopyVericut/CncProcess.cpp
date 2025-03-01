@@ -34,6 +34,7 @@ CncProcess::CncProcess()
 void CncProcess::ReadCncFile(QString filePath)
 {
 	textBrowser->clear();
+	QString Allline;
 	/*创建 QFile 对象*/
 	QFile file(filePath); 
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {}
@@ -43,11 +44,12 @@ void CncProcess::ReadCncFile(QString filePath)
 		/*读取一行*/
 		QString line = in.readLine();  
 		cncContentList.push_back(line);
+		Allline += line+"\n";
 		// 处理事件，确保 UI 在长时间任务过程中仍能响应
 		QApplication::processEvents();
 	}
 	file.close();  // 关闭文件
-
+	textBrowser->setText(Allline);
 }
 bool CncProcess::parseCNC()//解析CNC文件
 {
@@ -64,7 +66,6 @@ bool CncProcess::parseCNC()//解析CNC文件
 	double currentPointX{ 0.0 }, currentPointY{ 0.0 }, currentPointZ{ 10.0 }, currentI{ 0.0 }, currentJ{0.0};
 	for (auto i : cncContentList)
 	{
-		//PrintGCode(i);
 		/*确定Gstatus状态*/
 		if (i.contains(QString(" G00 ")) or i.contains(QString(" G0 ")) or i.contains(QString(" G01 ")) or i.contains(QString(" G1 "))) { Gstatus = "G01/G0"; }
 		else if (i.contains(QString(" G2 ")) or i.contains(QString(" G02 "))) { Gstatus = "G02"; }
@@ -194,7 +195,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 		QApplication::processEvents();
 
 	}
-	qDebug() << "解析完成";
+	
 	textBrowser->moveCursor(QTextCursor::Start);//返回到文本框的开始
 	return true;
 }
