@@ -220,6 +220,7 @@ int TubeNext::DisplayCore::Read_step_file(string filepath,string filename)
 	//Handle(AIS_Shape) ais_shape = new AIS_Shape(topods_shape);
 	//this->ShapeManeger[filename] = new shape(ais_shape);
 	this->DisplayShape(topods_shape, color, 1, filename);
+	currentImportShape = topods_shape;
 
 	return 0;
 }

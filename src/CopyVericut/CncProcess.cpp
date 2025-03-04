@@ -67,14 +67,15 @@ bool CncProcess::parseCNC()//解析CNC文件
 	for (auto i : cncContentList)
 	{
 		/*确定Gstatus状态*/
-		if (i.contains(QString(" G00 ")) or i.contains(QString(" G0 ")) or i.contains(QString(" G01 ")) or i.contains(QString(" G1 "))) { Gstatus = "G01/G0"; }
+		if (i.contains(QString(" G00 ")) or i.contains(QString(" G0 "))) { Gstatus = "G0"; }
+		if (i.contains(QString(" G01 ")) or i.contains(QString(" G1 "))) { Gstatus = "G01"; }
 		else if (i.contains(QString(" G2 ")) or i.contains(QString(" G02 "))) { Gstatus = "G02"; }
 		else if (i.contains(QString(" G3 ")) or i.contains(QString(" G03 "))) { Gstatus = "G03"; }
 		else if (i == "%" or i=="") { continue; }
 		/*写入Gcode*/
 		cncPathData.Gcode = i.toStdString();
 		/*判断Gstatus状态*/
-		if (Gstatus=="G01/G0")
+		if (Gstatus=="G0" or Gstatus=="G01")
 		{
 			/*设置轨迹几何形状*/
 			cncPathData.pathType = Line;
@@ -85,7 +86,7 @@ bool CncProcess::parseCNC()//解析CNC文件
 			/*设置终点坐标*/
 			text = i.toStdString();
 			/**/
-			cncPathData.Gstatus = "G01/G0";
+			cncPathData.Gstatus = Gstatus;
 			if (std::regex_search(text, match, patternX))
 			{
 				cncPathData.endPointX = std::stod(match[1]);

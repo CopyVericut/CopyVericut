@@ -25,11 +25,15 @@ void MachineControl::SetMachineSpindle(Handle(AIS_Shape) MachineSpindle)
 
 void MachineControl::MachineSpindleMove(double x,double y,double z)
 {
-	gp_Trsf T;
-	T.SetTranslation(gp_Vec(x, y, z));
-	TopLoc_Location loc = TopLoc_Location(T);
-	displayCore->Context->SetLocation(machineSpindleAis_shape, T);
-	displayCore->Context->UpdateCurrentViewer();
+	if (!machineSpindleShape.IsNull())
+	{
+		gp_Trsf T;
+		T.SetTranslation(gp_Vec(x, y, z));
+		TopLoc_Location loc = TopLoc_Location(T);
+		displayCore->Context->SetLocation(machineSpindleAis_shape, T);
+		displayCore->Context->UpdateCurrentViewer();
+	}
+	
 
 }
 

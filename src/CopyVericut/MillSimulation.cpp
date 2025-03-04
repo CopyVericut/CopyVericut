@@ -119,12 +119,6 @@ void MillSimulation::SetTextBrowser(QTextBrowser* textBrowser)
 
 void MillSimulation::Cutting(double x,double y,double z)
 {
-	//gp_Trsf T;
-	//T.SetTranslation(gp_Vec(x,y,z));
-	//TopLoc_Location loc = TopLoc_Location(T);
-	//CuttingToolShape.Located(loc);
-	// 进行布尔减操作，减去圆柱体
-
 	double radius = CuttingToolDiameter / 2.0;
 	double height = CuttingToolLength;
 	 //创建圆柱的轴线 (gp_Ax2)
@@ -133,16 +127,26 @@ void MillSimulation::Cutting(double x,double y,double z)
 	gp_Ax2 axis(origin, direction);  // 创建轴线
 	// 使用 BRepPrimAPI_MakeCylinder 创建圆柱
 	CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
+	auto start = std::chrono::high_resolution_clock::now();
 	cut= BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> duration = end - start;
+	std::cout << "布尔运算时间: " << duration.count() << " ms" << std::endl;
+	
 	if (cut.IsDone())
 	{
-		cut.Build();  // 执行布尔减操作
+	
 		cut.SimplifyResult();  // 简化结果
 		// 获取减去操作后的结果
 		BlankShape = cut.Shape();
+		auto start = std::chrono::high_resolution_clock::now();
 		BlankAis_shape->SetShape(BlankShape);
 		displayCore->Context->Redisplay(BlankAis_shape, true, false);
 		displayCore->Context->UpdateCurrentViewer();
+		// 记录结束时间
+		auto end = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> duration = end - start;
+		std::cout << "渲染更新时间: " << duration.count() << " ms" << std::endl;
 	}
 	
 }
@@ -203,7 +207,13 @@ void MillSimulation::CuttingSimulation()
 			/*主轴运动*/
 			machineControl->MachineSpindleMove(j.X(),j.Y(),j.Z()+offsetZ);
 			/*刀具切削*/
-			Cutting(j.X(), j.Y(), j.Z()+offsetZ);
+			if (i.Gstatus!="G0")
+			{	
+				
+				Cutting(j.X(), j.Y(), j.Z() + offsetZ);
+				
+				
+			}
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
 			QApplication::processEvents();
 		}

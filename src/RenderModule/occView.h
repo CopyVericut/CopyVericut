@@ -12,6 +12,7 @@
 #pragma once
 
 #include <map>
+#include <rendermodule_global.h>
 #include <opencascade/AIS_InteractiveContext.hxx>
 #include <QObject>
 #include <qwidget.h>
@@ -23,7 +24,7 @@ class QRubberBand;
 //! Adapted a QWidget for OpenCASCADE viewer.
 namespace TubeNext
 {
-    class OccView : public QMainWindow
+    class RENDERMODULE_EXPORT OccView : public QMainWindow
     {
         Q_OBJECT
 

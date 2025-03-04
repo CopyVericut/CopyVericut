@@ -70,6 +70,7 @@ namespace TubeNext
 		void RemoveAxis(Vector_Type thevector);
 
 	public:
+		TopoDS_Shape currentImportShape;
 		map<string, shape*> ShapeManeger;
 		OccView* myOccView;
 		
