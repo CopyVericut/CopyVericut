@@ -7,6 +7,12 @@
 #include <opencascade/AIS_Shape.hxx>
 #include "MachineControl.h"
 #include <opencascade/BRepAlgoAPI_Cut.hxx>
+#include <opencascade/BOPAlgo_MakerVolume.hxx>
+#include <opencascade/BRep_Builder.hxx>
+#include <opencascade/BOPAlgo_Splitter.hxx>
+#include <opencascade/BRepFeat_MakeCylindricalHole.hxx>
+
+
 using namespace TubeNext;
 class MillSimulation
 {
@@ -23,6 +29,7 @@ public:
 	void SetToolSweepShape(TopoDS_Shape ToolSweepShape);
 	void PathSimulation();
 	void CuttingSimulation();
+	void PerCuttingProcess();
 	void PrintGCode(QString Gcoge);
 	void DisPlayToolPaths();//显示全部路径
 	void DisPlayToolPath(CncPathData cncPathData);//显示单段路径
@@ -58,5 +65,11 @@ public://切削参数
 	double CuttingToolLength=0;
 	double offsetZ{ 0 };
 	BRepAlgoAPI_Cut cut;
+	BRep_Builder builder;
+	TopoDS_Compound compound;
+	TopTools_ListOfShape objList, toolList;
+	TopTools_ListOfShape arguments;
+	BOPAlgo_Splitter splitter;
+	BRepFeat_MakeCylindricalHole holeMaker;
 };
 

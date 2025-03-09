@@ -126,7 +126,7 @@ void CopyVericut::CuttingSimulation()
 	
 	millSimulation->SetCncPathDataList(cncProcess->cncPathDataList);
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：正在模拟切削过程"));
-	millSimulation->CuttingSimulation();
+	millSimulation->PerCuttingProcess();
 	statusBar()->showMessage(QString::fromLocal8Bit("状态：模拟切削过程完成"));
 }
 

@@ -36,11 +36,27 @@
 #include <opencascade/BRepPrimAPI_MakeCylinder.hxx>
 #include <opencascade/BRepAlgoAPI_BooleanOperation.hxx>
 #include <opencascade/BRepAlgoAPI_Cut.hxx>
+#include <opencascade/BOPAlgo_Builder.hxx>
+#include <opencascade/OSD_Parallel.hxx>
+#include <opencascade/BRepTools.hxx>
+#include <opencascade/BRepBuilderAPI_Transform.hxx>
+#include <opencascade/ShapeUpgrade_UnifySameDomain.hxx>
+#include <opencascade/STEPControl_Writer.hxx>
+#include <opencascade/IFSelect_ReturnStatus.hxx>
+#include <opencascade/STEPControl_Reader.hxx>
 #include "MachineControl.h"
 
 MillSimulation::MillSimulation()
 {
 	machineControl = new MachineControl();
+	cut.SetRunParallel(true);
+	cut.SetFuzzyValue(0.011);
+	arguments.Append(BlankShape);
+	builder.MakeCompound(compound);
+	cut.Build();
+	cut.RunParallel();
+	// 启用并行计算
+	OSD_Parallel::SetUseOcctThreads(true);
 }
 
 void MillSimulation::CreateBlankShape(double L, double W, double H)
@@ -119,6 +135,7 @@ void MillSimulation::SetTextBrowser(QTextBrowser* textBrowser)
 
 void MillSimulation::Cutting(double x,double y,double z)
 {
+	TopoDS_Shape mergedTool;
 	double radius = CuttingToolDiameter / 2.0;
 	double height = CuttingToolLength;
 	 //创建圆柱的轴线 (gp_Ax2)
@@ -127,7 +144,14 @@ void MillSimulation::Cutting(double x,double y,double z)
 	gp_Ax2 axis(origin, direction);  // 创建轴线
 	// 使用 BRepPrimAPI_MakeCylinder 创建圆柱
 	CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
+	//gp_Trsf transform;
+	//transform.SetTranslation(gp_Vec(x, y, z));  // 平移 (10, 20, 30)
+	// 对 shape 应用变换
+	//BRepBuilderAPI_Transform brepTransform(CuttingToolShape, transform);
+	//TopoDS_Shape transformedShape = brepTransform.Shape();
 	auto start = std::chrono::high_resolution_clock::now();
+	///builder.Add(compound, CuttingToolShape);
+	//mergedTool = compound;
 	cut= BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double, std::milli> duration = end - start;
@@ -135,12 +159,12 @@ void MillSimulation::Cutting(double x,double y,double z)
 	
 	if (cut.IsDone())
 	{
-	
-		cut.SimplifyResult();  // 简化结果
 		// 获取减去操作后的结果
-		BlankShape = cut.Shape();
+		BRepTools::Clean(BlankShape);
+		//BlankShape = cut.Shape();
+		cut.SimplifyResult();  // 简化结果
 		auto start = std::chrono::high_resolution_clock::now();
-		BlankAis_shape->SetShape(BlankShape);
+		BlankAis_shape->SetShape(cut.Shape());
 		displayCore->Context->Redisplay(BlankAis_shape, true, false);
 		displayCore->Context->UpdateCurrentViewer();
 		// 记录结束时间
@@ -188,6 +212,7 @@ void MillSimulation::PathSimulation()
 void MillSimulation::CuttingSimulation()
 {
 	vector<gp_Pnt> InterpolationPointsList;
+
 	/*根据参数生成刀具*/
 	CreateToolShape();
 	for (auto i : cncPathDataList)
@@ -220,6 +245,56 @@ void MillSimulation::CuttingSimulation()
 		// 处理事件，确保 UI 在长时间任务过程中仍能响应
 		QApplication::processEvents();
 	}
+}
+
+void MillSimulation::PerCuttingProcess()
+{
+	STEPControl_Writer writer;
+	STEPControl_Reader reader;
+	IFSelect_ReturnStatus status;
+	vector<gp_Pnt> InterpolationPointsList;
+	vector<TopoDS_Shape> toolList1;
+	TopTools_ListOfShape objList, toolList;
+	BOPAlgo_Builder builder;
+	/*根据参数生成刀具*/
+	CreateToolShape();
+	builder.AddArgument(BlankShape);  // 被减形状
+	for (auto i : cncPathDataList)
+	{
+		if (i.pathType == Line)
+		{
+			InterpolationPointsList = CncProcess().GetLinearInterpolationPoints(i, 0.1);
+		}
+		else if (i.pathType == Arc)
+		{
+			InterpolationPointsList = CncProcess().GetArcInterpolationPoints(i, 0.1);
+		}
+		/*显示此段路径*/
+		DisPlayToolPath(i);
+		if (i.Gstatus != "G0")
+		{
+			auto start = std::chrono::high_resolution_clock::now();
+			double radius = CuttingToolDiameter / 2.0;
+			double height = CuttingToolLength;
+			//创建圆柱的轴线 (gp_Ax2)
+			gp_Pnt origin(i.endPointX, i.endPointX, i.endPointZ + offsetZ);  // 圆柱的基准点 (原点)
+			gp_Dir direction(0.0, 0.0, 1.0);  // 圆柱的方向 (Z轴方向)
+			gp_Ax2 axis(origin, direction);  // 创建轴线
+			CuttingToolShape = BRepPrimAPI_MakeBox(origin, 1, 1,1).Shape();
+			cut = BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
+			cut.SetRunParallel(true);
+			cut.RunParallel();
+			BRepTools::Clean(BlankShape,true);
+			BlankShape = cut.Shape();
+			auto end = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double, std::milli> duration = end - start;
+			std::cout << "写入一次brep的时间: " << duration.count() << " ms" << std::endl;
+		}
+		// 处理事件，确保 UI 在长时间任务过程中仍能响应
+		QApplication::processEvents();
+		cout << i.Gcode<<endl;
+	}
+	
 }
 
 void MillSimulation::PrintGCode(QString Gcoge)
