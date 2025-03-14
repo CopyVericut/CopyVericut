@@ -65,7 +65,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\RenderModule;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\RenderModule;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>.\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -101,6 +101,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BrepToMesh.cpp" />
+    <ClCompile Include="CgalProcess.cpp" />
     <ClCompile Include="MillSimulation.cpp" />
     <QtRcc Include="CopyVericut.qrc" />
     <QtUic Include="CopyVericut.ui" />
@@ -111,6 +113,8 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BrepToMesh.h" />
+    <ClInclude Include="CgalProcess.h" />
     <ClInclude Include="CncProcess.h" />
     <ClInclude Include="MachineControl.h" />
     <ClInclude Include="MillSimulation.h" />
