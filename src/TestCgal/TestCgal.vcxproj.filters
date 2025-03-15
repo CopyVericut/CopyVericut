@@ -23,47 +23,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="CopyVericut.qrc">
-      <Filter>Resource Files</Filter>
-    </QtRcc>
-    <QtUic Include="CopyVericut.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtMoc Include="CopyVericut.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <ClCompile Include="CopyVericut.cpp">
+    <ClCompile Include="maincpp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CgalProcess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CncProcess.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MachineControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MillSimulation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BrepToMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="CncProcess.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MachineControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MillSimulation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BrepToMesh.h">
+    <ClInclude Include="CgalProcess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CopyVericut", "CopyVericut.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderModule", "..\RenderModule\RenderModule.vcxproj", "{DA9AB1CE-A98F-48FE-A75C-5332CCC9EB74}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestCgal", "..\TestCgal\TestCgal.vcxproj", "{59BF4855-022B-4180-AAE0-025CB2132233}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{DA9AB1CE-A98F-48FE-A75C-5332CCC9EB74}.Debug|x64.Build.0 = Debug|x64
 		{DA9AB1CE-A98F-48FE-A75C-5332CCC9EB74}.Release|x64.ActiveCfg = Release|x64
 		{DA9AB1CE-A98F-48FE-A75C-5332CCC9EB74}.Release|x64.Build.0 = Release|x64
+		{59BF4855-022B-4180-AAE0-025CB2132233}.Debug|x64.ActiveCfg = Debug|x64
+		{59BF4855-022B-4180-AAE0-025CB2132233}.Debug|x64.Build.0 = Debug|x64
+		{59BF4855-022B-4180-AAE0-025CB2132233}.Release|x64.ActiveCfg = Release|x64
+		{59BF4855-022B-4180-AAE0-025CB2132233}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

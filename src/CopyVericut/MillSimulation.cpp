@@ -45,6 +45,7 @@
 #include <opencascade/IFSelect_ReturnStatus.hxx>
 #include <opencascade/STEPControl_Reader.hxx>
 #include "MachineControl.h"
+#include "BrepToMesh.h"
 
 MillSimulation::MillSimulation()
 {
@@ -256,6 +257,7 @@ void MillSimulation::PerCuttingProcess()
 	vector<TopoDS_Shape> toolList1;
 	TopTools_ListOfShape objList, toolList;
 	BOPAlgo_Builder builder;
+	CgalProcess acgalProcess;
 	/*根据参数生成刀具*/
 	CreateToolShape();
 	builder.AddArgument(BlankShape);  // 被减形状
@@ -280,12 +282,19 @@ void MillSimulation::PerCuttingProcess()
 			gp_Pnt origin(i.endPointX, i.endPointX, i.endPointZ + offsetZ);  // 圆柱的基准点 (原点)
 			gp_Dir direction(0.0, 0.0, 1.0);  // 圆柱的方向 (Z轴方向)
 			gp_Ax2 axis(origin, direction);  // 创建轴线
-			CuttingToolShape = BRepPrimAPI_MakeBox(origin, 1, 1,1).Shape();
-			cut = BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
-			cut.SetRunParallel(true);
-			cut.RunParallel();
+			CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
+			BrepToMesh* toolBrepToMesh = new BrepToMesh(CuttingToolShape);
+			BrepToMesh* blankBrepToMesh = new BrepToMesh(BlankShape);
+			//Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, Quantity_TOC_RGB);
+			//displayCore->DisplayShape(CuttingToolShape, acolor, 1);
+			toolBrepToMesh->ExportToSTL("tool.STL");
+			blankBrepToMesh->ExportToSTL("blank.STL");
+			acgalProcess.ImpoerStl();
+			//cut = BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
+			//cut.SetRunParallel(true);
+			//cut.RunParallel();
 			BRepTools::Clean(BlankShape,true);
-			BlankShape = cut.Shape();
+			//BlankShape = cut.Shape();
 			auto end = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double, std::milli> duration = end - start;
 			std::cout << "写入一次brep的时间: " << duration.count() << " ms" << std::endl;

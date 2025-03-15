@@ -38,6 +38,10 @@
 #include <opencascade/IFSelect_ReturnStatus.hxx>
 #include <opencascade/STEPControl_Reader.hxx>
 #include <opencascade/BRepMesh_IncrementalMesh.hxx>
+#include <string.h>
+
+using namespace std;
+
 
 class BrepToMesh
 {
@@ -46,6 +50,7 @@ public:
 	~BrepToMesh() = default;
 	void SetBrepShape(TopoDS_Shape ashape);
 	void ToMesh();
+	void ExportToSTL(string filename);
 public:
 	Standard_Real linearDeflection = 0.01;
 	Standard_Real angularDeflection = 0.5;
