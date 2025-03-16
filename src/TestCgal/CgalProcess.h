@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Polygon_mesh_processing.h>
 #include <CGAL/IO/STL.h>
 #include <CGAL/draw_polyhedron.h>
 #include <CGAL/Surface_mesh.h>
+#include "DllApi.h"
 using namespace std;
 typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 typedef CGAL::Polyhedron_3<Kernel> Polyhedron_3;
@@ -12,7 +13,7 @@ typedef std::vector<CGAL::cpp11::array<double, 3> >arryPoint;
 typedef std::vector<CGAL::cpp11::array<int, 3> > arrtriangles;
 typedef CGAL::Surface_mesh<Kernel::Point_3> Mesh;
 
-class CgalProcess
+class MYDLL_API CgalProcess
 {
 public:
 	CgalProcess();

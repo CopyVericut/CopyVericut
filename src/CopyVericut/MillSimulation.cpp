@@ -289,7 +289,7 @@ void MillSimulation::PerCuttingProcess()
 			//displayCore->DisplayShape(CuttingToolShape, acolor, 1);
 			toolBrepToMesh->ExportToSTL("tool.STL");
 			blankBrepToMesh->ExportToSTL("blank.STL");
-			acgalProcess.ImpoerStl();
+			//acgalProcess.ImpoerStl();
 			//cut = BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
 			//cut.SetRunParallel(true);
 			//cut.RunParallel();

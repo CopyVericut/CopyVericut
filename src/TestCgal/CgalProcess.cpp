@@ -2,7 +2,9 @@
 #include <CGAL/IO/STL.h>
 #include <CGAL/draw_polyhedron.h>  // ✅ CGAL Viewer
 #define CGAL_USE_BASIC_VIEWER
+
 typedef CGAL::Polyhedron_3<Kernel> Polyhedron_3;
+
 CgalProcess::CgalProcess()
 {
 	

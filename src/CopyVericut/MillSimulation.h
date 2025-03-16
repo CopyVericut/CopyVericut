@@ -1,9 +1,10 @@
 ﻿#pragma once
+#include <CgalProcess.h>
 #include <opencascade/TopoDS_Shape.hxx>
 #include <QTextBrowser>
 #include <DisplayCore.h>
 #include "CncProcess.h"
-#include <opencascade/Standard_Handle.hxx>
+//#include <opencascade/Standard_Handle.hxx>
 #include <opencascade/AIS_Shape.hxx>
 #include "MachineControl.h"
 #include <opencascade/BRepAlgoAPI_Cut.hxx>
@@ -11,7 +12,6 @@
 #include <opencascade/BRep_Builder.hxx>
 #include <opencascade/BOPAlgo_Splitter.hxx>
 #include <opencascade/BRepFeat_MakeCylindricalHole.hxx>
-
 
 using namespace TubeNext;
 class MillSimulation

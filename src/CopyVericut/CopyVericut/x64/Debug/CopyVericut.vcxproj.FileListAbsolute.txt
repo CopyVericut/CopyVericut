@@ -28,6 +28,9 @@ F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\TKMe
 F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\TKHLR.dll
 F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\TKXSBase.dll
 F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\TKOpenGl.dll
-F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\CopyVericut\x64\Debug\CopyVeri.21EEC616.Up2Date
+F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\gmp-10.dll
+F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\mpfr-6.dll
+F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\TKDESTL.dll
 F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\TKFeat.dll
 F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\x64\Debug\TKBool.dll
+F:\宁波莱布尼茨项目\2025\003\开发项目\src\CopyVericut\CopyVericut\x64\Debug\CopyVeri.21EEC616.Up2Date
