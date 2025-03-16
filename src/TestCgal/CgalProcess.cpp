@@ -1,8 +1,9 @@
 ﻿#include "CgalProcess.h"
 #include <CGAL/IO/STL.h>
-#include <CGAL/draw_polyhedron.h>  // ✅ CGAL Viewer
+#include <CGAL/draw_polyhedron.h>  
 #define CGAL_USE_BASIC_VIEWER
 
+namespace PMP = CGAL::Polygon_mesh_processing;
 typedef CGAL::Polyhedron_3<Kernel> Polyhedron_3;
 
 CgalProcess::CgalProcess()
@@ -35,7 +36,7 @@ void CgalProcess::ImpoerStl(string filename, arryPoint apoint, arrtriangles atri
 
 void CgalProcess::ExportStl(string filename)
 {
-	const std::string output_filename = "output.stl";
+	const std::string output_filename = filename;
 	if (!CGAL::IO::write_STL(output_filename, result))
 	{
 		std::cerr << "Failed to write STL file: " << output_filename << std::endl;
@@ -55,15 +56,14 @@ void CgalProcess::SetBlankMesh()
 	ImpoerStl("../CopyVericut/blank.stl", blankPoints, blankrtriangles,polyBlankMesh);
 }
 
-void CgalProcess::Cut()
+void CgalProcess::Cut(string toolStlPath, string blankStlPath)
 {
 	// 读取两个 STL 文件
-	Mesh  __polyToolMesh, __polyBlankMesh,__result;
+	Polyhedron_3  __polyToolMesh, __polyBlankMesh, __result;
 	Polyhedron_3 poly_Partition;
 	std::vector<CGAL::cpp11::array<double, 3> > points;
 	std::vector<CGAL::cpp11::array<int, 3> > triangles;
-
-	CGAL::IO::read_STL("../CopyVericut/blank.stl", points, points);
+	CGAL::IO::read_STL(toolStlPath, points, triangles);
 
 	cout << "number of points in soup : " << points.size() << "\n";
 	cout << "number of triangles in soup : " << triangles.size() << "\n";
@@ -71,7 +71,7 @@ void CgalProcess::Cut()
 	CGAL::Polygon_mesh_processing::orient_polygon_soup(points, triangles);
 	CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, triangles, __polyBlankMesh);
 
-	CGAL::IO::read_STL("../CopyVericut/tool.stl", points, points);
+	CGAL::IO::read_STL(blankStlPath, points, triangles);
 
 	cout << "number of points in soup : " << points.size() << "\n";
 	cout << "number of triangles in soup : " << triangles.size() << "\n";
@@ -79,8 +79,52 @@ void CgalProcess::Cut()
 	CGAL::Polygon_mesh_processing::orient_polygon_soup(points, triangles);
 	CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, triangles, __polyToolMesh);
 
+	
+
+
+	// 执行布尔运算 (差集)
+	if (CGAL::Polygon_mesh_processing::corefine_and_compute_difference(__polyBlankMesh, __polyToolMesh, __result))
+	{
+		//CGAL::Polygon_mesh_processing::corefine_and_compute_difference(__polyBlankMesh, __polyToolMesh, __result);
+	}
+	
+	//result = __result;
+	
+	
+	
+}
+
+void CgalProcess::Cut()
+{
+	// 读取两个 STL 文件
+	Mesh  __polyToolMesh, __polyBlankMesh,__result;
+	Polyhedron_3 poly_Partition;
+	std::vector<CGAL::cpp11::array<double, 3> > points;
+	std::vector<CGAL::cpp11::array<int, 3> > triangles;
+	CGAL::IO::read_STL("../CopyVericut/blank.STL", points, triangles);
+
+	cout << "number of points in soup : " << points.size() << "\n";
+	cout << "number of triangles in soup : " << triangles.size() << "\n";
+
+	CGAL::Polygon_mesh_processing::orient_polygon_soup(points, triangles);
+	CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, triangles, __polyBlankMesh);
+
+	CGAL::IO::read_STL("../CopyVericut/tool.STL", points, triangles);
+
+	cout << "number of points in soup : " << points.size() << "\n";
+	cout << "number of triangles in soup : " << triangles.size() << "\n";
+
+	CGAL::Polygon_mesh_processing::orient_polygon_soup(points, triangles);
+	CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, triangles, __polyToolMesh);
 	// 执行布尔运算 (差集)
 	CGAL::Polygon_mesh_processing::corefine_and_compute_difference(__polyBlankMesh, __polyToolMesh, __result);
-	
+	const std::string output_filename = "OUT.STL";
+	if (!CGAL::IO::write_STL(output_filename, result))
+	{
+		std::cerr << "Failed to write STL file: " << output_filename << std::endl;
+
+	}
+
+	std::cout << "STL file written successfully: " << output_filename << std::endl;
 }
 

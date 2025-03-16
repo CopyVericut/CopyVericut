@@ -23,6 +23,7 @@ public:
 	void ExportStl(string filename);
 	void SetToolMesh();
 	void SetBlankMesh();
+	void Cut(string toolStlPath,string blankStlPath);
 	void Cut();
 public:
 	Mesh  polyToolMesh, polyBlankMesh, result;

@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <regex>
 #include <QApplication>
+#include <QCoreApplication>
 #include <opencascade/gp_Pnt.hxx>
 #include <opencascade/gp_Vec.hxx>
 #include <opencascade/BRepBuilderAPI_MakeEdge.hxx>
@@ -250,17 +251,23 @@ void MillSimulation::CuttingSimulation()
 
 void MillSimulation::PerCuttingProcess()
 {
-	STEPControl_Writer writer;
-	STEPControl_Reader reader;
+	offsetZ = 0;
 	IFSelect_ReturnStatus status;
-	vector<gp_Pnt> InterpolationPointsList;
-	vector<TopoDS_Shape> toolList1;
-	TopTools_ListOfShape objList, toolList;
 	BOPAlgo_Builder builder;
 	CgalProcess acgalProcess;
+	BrepToMesh* toolBrepToMesh;
+	BrepToMesh* blankBrepToMesh;
+	/*获取当前exe运行的路径*/
+	QString exeDir = QCoreApplication::applicationDirPath();
+	string toolStlPath = exeDir.toStdString()+"/"+"tool.STL";
+	string blankStlPath = exeDir.toStdString() + "/"+"blank.STL";
+	string reulst = exeDir.toStdString() + "/"+"reulst.STL";
+	cout<<toolStlPath << blankStlPath << reulst<<endl;
+	/*导出毛坯*/
+	blankBrepToMesh = new BrepToMesh(BlankShape);
+	blankBrepToMesh->ExportToSTL(blankStlPath);
 	/*根据参数生成刀具*/
 	CreateToolShape();
-	builder.AddArgument(BlankShape);  // 被减形状
 	for (auto i : cncPathDataList)
 	{
 		if (i.pathType == Line)
@@ -282,22 +289,27 @@ void MillSimulation::PerCuttingProcess()
 			gp_Pnt origin(i.endPointX, i.endPointX, i.endPointZ + offsetZ);  // 圆柱的基准点 (原点)
 			gp_Dir direction(0.0, 0.0, 1.0);  // 圆柱的方向 (Z轴方向)
 			gp_Ax2 axis(origin, direction);  // 创建轴线
-			CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
-			BrepToMesh* toolBrepToMesh = new BrepToMesh(CuttingToolShape);
-			BrepToMesh* blankBrepToMesh = new BrepToMesh(BlankShape);
-			//Quantity_Color acolor = Quantity_Color(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, Quantity_TOC_RGB);
-			//displayCore->DisplayShape(CuttingToolShape, acolor, 1);
-			toolBrepToMesh->ExportToSTL("tool.STL");
-			blankBrepToMesh->ExportToSTL("blank.STL");
-			//acgalProcess.ImpoerStl();
-			//cut = BRepAlgoAPI_Cut(BlankShape, CuttingToolShape);
-			//cut.SetRunParallel(true);
-			//cut.RunParallel();
-			BRepTools::Clean(BlankShape,true);
-			//BlankShape = cut.Shape();
-			auto end = std::chrono::high_resolution_clock::now();
-			std::chrono::duration<double, std::milli> duration = end - start;
-			std::cout << "写入一次brep的时间: " << duration.count() << " ms" << std::endl;
+			//BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
+			if (true)
+			{
+				//CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
+				//CuttingToolShape = cylinderMaker.Shape();
+				gp_Trsf transform;
+				transform.SetTranslation(gp_Vec(i.endPointX, i.endPointX, i.endPointZ));  // 平移 (10, 20, 30)
+				// 对 shape 应用变换
+				BRepBuilderAPI_Transform brepTransform(CuttingToolShape, transform);
+				TopoDS_Shape transformedShape = brepTransform.Shape();
+				toolBrepToMesh = new BrepToMesh(transformedShape);
+				toolBrepToMesh->ExportToSTL(toolStlPath);
+				acgalProcess.Cut(toolStlPath, blankStlPath);
+				acgalProcess.ExportStl("reulst.stl");
+				BRepTools::Clean(BlankShape, true);
+				//BlankShape = cut.Shape();
+				auto end = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<double, std::milli> duration = end - start;
+				std::cout << "写入一次brep的时间: " << duration.count() << " ms" << std::endl;
+			}
+			
 		}
 		// 处理事件，确保 UI 在长时间任务过程中仍能响应
 		QApplication::processEvents();

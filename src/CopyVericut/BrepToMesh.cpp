@@ -1,4 +1,4 @@
-#include "BrepToMesh.h"
+﻿#include "BrepToMesh.h"
 #include<opencascade/TopExp_Explorer.hxx>
 #include <opencascade/TopoDS_Shape.hxx>
 #include <opencascade/TopoDS_Face.hxx>
@@ -26,11 +26,12 @@ void BrepToMesh::SetBrepShape(TopoDS_Shape ashape)
 void BrepToMesh::ToMesh()
 {
 		
-
+	BRepMesh_IncrementalMesh mesh(shape, 1);
 }
 
 void BrepToMesh::ExportToSTL(string filename)
 {
+	ToMesh();
 	StlAPI_Writer writer;
 	writer.Write(shape, filename.c_str());
 }
