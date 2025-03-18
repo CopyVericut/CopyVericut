@@ -21,15 +21,16 @@ public:
 public:
 	void ImpoerStl(string filename,arryPoint apoint, arrtriangles triangles, Mesh amesh);
 	void ExportStl(string filename);
-	void SetToolMesh();
-	void SetBlankMesh();
-	void Cut(string toolStlPath,string blankStlPath);
+	void SetToolMesh(Mesh toolMesh);
+	void SetBlankMesh(Mesh blankMesh);
+	void Cut(string toolStlPath,string blankStlPath, string resultStlPath);
 	void Cut();
 public:
-	Mesh  polyToolMesh, polyBlankMesh, result;
+	Mesh   surfaceToolMesh, surfaceBlankMesh, surfacresult;
+	Polyhedron_3 polyToolMesh, polyBlankMesh, result;
 	std::vector<CGAL::cpp11::array<double, 3> > toolPoints,blankPoints;
 	std::vector<CGAL::cpp11::array<int, 3> > toolrtriangles, blankrtriangles;
-
+	int count{ 0 };
 	
 };
 

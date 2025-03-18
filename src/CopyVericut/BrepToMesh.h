@@ -1,4 +1,6 @@
 #pragma once
+#include <CGAL/Surface_mesh.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <opencascade/gp_Pnt.hxx>
 #include <opencascade/gp_Vec.hxx>
 #include <opencascade/BRepBuilderAPI_MakeEdge.hxx>
@@ -39,9 +41,10 @@
 #include <opencascade/STEPControl_Reader.hxx>
 #include <opencascade/BRepMesh_IncrementalMesh.hxx>
 #include <string.h>
-
+#include <CgalProcess.h>
 using namespace std;
-
+//pedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
+typedef CGAL::Surface_mesh<Kernel::Point_3> SurfaceMesh;
 
 class BrepToMesh
 {
@@ -49,6 +52,7 @@ public:
 	BrepToMesh(TopoDS_Shape ashape);
 	~BrepToMesh() = default;
 	void SetBrepShape(TopoDS_Shape ashape);
+	void ConvertCgalMesh();
 	void ToMesh();
 	void ExportToSTL(string filename);
 public:
@@ -58,5 +62,6 @@ public:
 	TopoDS_Shape shape;
 	std::vector<gp_Pnt> points;
 	std::vector<std::array<int, 3>> triangles;
+	SurfaceMesh cgal_mesh;
 };
 

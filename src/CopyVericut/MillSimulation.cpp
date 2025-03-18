@@ -265,6 +265,7 @@ void MillSimulation::PerCuttingProcess()
 	cout<<toolStlPath << blankStlPath << reulst<<endl;
 	/*导出毛坯*/
 	blankBrepToMesh = new BrepToMesh(BlankShape);
+	//blankBrepToMesh->ConvertCgalMesh();
 	blankBrepToMesh->ExportToSTL(blankStlPath);
 	/*根据参数生成刀具*/
 	CreateToolShape();
@@ -282,6 +283,7 @@ void MillSimulation::PerCuttingProcess()
 		DisPlayToolPath(i);
 		if (i.Gstatus != "G0")
 		{
+			cout << i.Gcode.c_str() << i.Gstatus <<endl;
 			auto start = std::chrono::high_resolution_clock::now();
 			double radius = CuttingToolDiameter / 2.0;
 			double height = CuttingToolLength;
@@ -295,16 +297,14 @@ void MillSimulation::PerCuttingProcess()
 				//CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
 				//CuttingToolShape = cylinderMaker.Shape();
 				gp_Trsf transform;
-				transform.SetTranslation(gp_Vec(i.endPointX, i.endPointX, i.endPointZ));  // 平移 (10, 20, 30)
+				transform.SetTranslation(gp_Vec(i.endPointX, i.endPointX, i.endPointZ + offsetZ));  // 平移 (10, 20, 30)
 				// 对 shape 应用变换
 				BRepBuilderAPI_Transform brepTransform(CuttingToolShape, transform);
 				TopoDS_Shape transformedShape = brepTransform.Shape();
 				toolBrepToMesh = new BrepToMesh(transformedShape);
 				toolBrepToMesh->ExportToSTL(toolStlPath);
-				acgalProcess.Cut(toolStlPath, blankStlPath);
-				acgalProcess.ExportStl("reulst.stl");
+				acgalProcess.Cut(toolStlPath,blankStlPath, reulst);
 				BRepTools::Clean(BlankShape, true);
-				//BlankShape = cut.Shape();
 				auto end = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<double, std::milli> duration = end - start;
 				std::cout << "写入一次brep的时间: " << duration.count() << " ms" << std::endl;
@@ -313,7 +313,7 @@ void MillSimulation::PerCuttingProcess()
 		}
 		// 处理事件，确保 UI 在长时间任务过程中仍能响应
 		QApplication::processEvents();
-		cout << i.Gcode<<endl;
+		
 	}
 	
 }
