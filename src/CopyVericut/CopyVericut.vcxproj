@@ -102,7 +102,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BrepToMesh.cpp" />
     <ClCompile Include="MillSimulation.cpp" />
     <QtRcc Include="CopyVericut.qrc" />
     <QtUic Include="CopyVericut.ui" />
@@ -113,7 +112,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BrepToMesh.h" />
     <ClInclude Include="CncProcess.h" />
     <ClInclude Include="MachineControl.h" />
     <ClInclude Include="MillSimulation.h" />

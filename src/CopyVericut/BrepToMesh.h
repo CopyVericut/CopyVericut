@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <opencascade/gp_Pnt.hxx>
@@ -41,7 +41,6 @@
 #include <opencascade/STEPControl_Reader.hxx>
 #include <opencascade/BRepMesh_IncrementalMesh.hxx>
 #include <string.h>
-#include <CgalProcess.h>
 using namespace std;
 //pedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 typedef CGAL::Surface_mesh<Kernel::Point_3> SurfaceMesh;

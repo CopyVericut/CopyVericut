@@ -1,10 +1,8 @@
 ﻿#pragma once
-#include <CgalProcess.h>
 #include <opencascade/TopoDS_Shape.hxx>
 #include <QTextBrowser>
 #include <DisplayCore.h>
 #include "CncProcess.h"
-//#include <opencascade/Standard_Handle.hxx>
 #include <opencascade/AIS_Shape.hxx>
 #include "MachineControl.h"
 #include <opencascade/BRepAlgoAPI_Cut.hxx>
@@ -12,6 +10,7 @@
 #include <opencascade/BRep_Builder.hxx>
 #include <opencascade/BOPAlgo_Splitter.hxx>
 #include <opencascade/BRepFeat_MakeCylindricalHole.hxx>
+#include <opencascade/IGESControl_Writer.hxx>
 
 using namespace TubeNext;
 class MillSimulation
@@ -40,6 +39,7 @@ public:
 	void RefreshBlankShape();
 	void DisPlayBlankShape();
 	void ResetBlankShape();
+	void ExportPathIGES(string path);
 
 public:
 	TopoDS_Shape CuttingToolShape;
@@ -51,8 +51,10 @@ public:
 	Handle(AIS_Shape) BlankAis_shape {nullptr};
 	Handle(AIS_Shape) WorkPieceAis_shape { nullptr };
 	Handle(AIS_Shape) ToolPathAis_shape { nullptr };
+	vector<TopoDS_Edge> ToolPathCurves;
 public:
 	DisplayCore* displayCore;
+	IGESControl_Writer igesWriter;
 	vector<CncPathData> cncPathDataList;
 	vector<gp_Pnt> InterpolationPointsList;//插补点
 	QTextBrowser* textBrowser;//显示G代码的文本框

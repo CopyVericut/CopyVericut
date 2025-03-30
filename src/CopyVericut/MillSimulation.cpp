@@ -37,6 +37,7 @@
 #include <opencascade/BRepPrimAPI_MakeCylinder.hxx>
 #include <opencascade/BRepAlgoAPI_BooleanOperation.hxx>
 #include <opencascade/BRepAlgoAPI_Cut.hxx>
+#include <opencascade/BRepAlgoAPI_Fuse.hxx>
 #include <opencascade/BOPAlgo_Builder.hxx>
 #include <opencascade/OSD_Parallel.hxx>
 #include <opencascade/BRepTools.hxx>
@@ -46,7 +47,6 @@
 #include <opencascade/IFSelect_ReturnStatus.hxx>
 #include <opencascade/STEPControl_Reader.hxx>
 #include "MachineControl.h"
-#include "BrepToMesh.h"
 
 MillSimulation::MillSimulation()
 {
@@ -206,6 +206,16 @@ void MillSimulation::ResetBlankShape()
 	}
 }
 
+void MillSimulation::ExportPathIGES(string path)
+{
+	for (auto &curve:ToolPathCurves)
+	{
+		igesWriter.AddShape(curve);
+	}
+	string exportPath = path + ".iges";
+	igesWriter.Write(exportPath.c_str());
+}
+
 void MillSimulation::PathSimulation()
 {
 	DisPlayToolPaths();
@@ -252,11 +262,11 @@ void MillSimulation::CuttingSimulation()
 void MillSimulation::PerCuttingProcess()
 {
 	offsetZ = 0;
+	double radius = 10;
 	IFSelect_ReturnStatus status;
-	BOPAlgo_Builder builder;
-	CgalProcess acgalProcess;
-	BrepToMesh* toolBrepToMesh;
-	BrepToMesh* blankBrepToMesh;
+	TopoDS_Compound compound;
+	BRep_Builder builder;
+	builder.MakeCompound(compound);
 	/*获取当前exe运行的路径*/
 	QString exeDir = QCoreApplication::applicationDirPath();
 	string toolStlPath = exeDir.toStdString()+"/"+"tool.STL";
@@ -264,9 +274,7 @@ void MillSimulation::PerCuttingProcess()
 	string reulst = exeDir.toStdString() + "/"+"reulst.STL";
 	cout<<toolStlPath << blankStlPath << reulst<<endl;
 	/*导出毛坯*/
-	blankBrepToMesh = new BrepToMesh(BlankShape);
 	//blankBrepToMesh->ConvertCgalMesh();
-	blankBrepToMesh->ExportToSTL(blankStlPath);
 	/*根据参数生成刀具*/
 	CreateToolShape();
 	for (auto i : cncPathDataList)
@@ -280,12 +288,11 @@ void MillSimulation::PerCuttingProcess()
 			InterpolationPointsList = CncProcess().GetArcInterpolationPoints(i, 0.1);
 		}
 		/*显示此段路径*/
-		DisPlayToolPath(i);
+		//DisPlayToolPath(i);
 		if (i.Gstatus != "G0")
 		{
 			cout << i.Gcode.c_str() << i.Gstatus <<endl;
-			auto start = std::chrono::high_resolution_clock::now();
-			double radius = CuttingToolDiameter / 2.0;
+			//radius = CuttingToolDiameter / 2.0;
 			double height = CuttingToolLength;
 			//创建圆柱的轴线 (gp_Ax2)
 			gp_Pnt origin(i.endPointX, i.endPointX, i.endPointZ + offsetZ);  // 圆柱的基准点 (原点)
@@ -294,20 +301,27 @@ void MillSimulation::PerCuttingProcess()
 			//BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
 			if (true)
 			{
-				//CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
-				//CuttingToolShape = cylinderMaker.Shape();
-				gp_Trsf transform;
-				transform.SetTranslation(gp_Vec(i.endPointX, i.endPointX, i.endPointZ + offsetZ));  // 平移 (10, 20, 30)
-				// 对 shape 应用变换
-				BRepBuilderAPI_Transform brepTransform(CuttingToolShape, transform);
-				TopoDS_Shape transformedShape = brepTransform.Shape();
-				toolBrepToMesh = new BrepToMesh(transformedShape);
-				toolBrepToMesh->ExportToSTL(toolStlPath);
-				acgalProcess.Cut(toolStlPath,blankStlPath, reulst);
+				
+				CuttingToolShape = BRepPrimAPI_MakeCylinder(axis, radius, height).Shape();
+
+				//builder.Add(compound, CuttingToolShape);
+				auto start = std::chrono::high_resolution_clock::now();
+				BlankShape=BRepAlgoAPI_Fuse(BlankShape, CuttingToolShape).Shape();
 				BRepTools::Clean(BlankShape, true);
 				auto end = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<double, std::milli> duration = end - start;
 				std::cout << "写入一次brep的时间: " << duration.count() << " ms" << std::endl;
+				BlankAis_shape->SetShape(BlankShape);
+				displayCore->Context->Redisplay(BlankAis_shape, true, false);
+				displayCore->Context->UpdateCurrentViewer();
+				//CuttingToolShape = cylinderMaker.Shape();
+				//gp_Trsf transform;
+				//transform.SetTranslation(gp_Vec(i.endPointX, i.endPointX, i.endPointZ + offsetZ));  // 平移 (10, 20, 30)
+				// 对 shape 应用变换
+				//BRepBuilderAPI_Transform brepTransform(CuttingToolShape, transform);
+				//TopoDS_Shape transformedShape = brepTransform.Shape();
+				//toolBrepToMesh = new BrepToMesh(transformedShape);
+				
 			}
 			
 		}
@@ -355,6 +369,7 @@ void MillSimulation::DisPlayToolPaths()
 			//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
 			//drawer->SetLineAspect(asp);
 			//ais_line->Attributes()->SetLineAspect(asp);
+			ToolPathCurves.push_back(anEdge);
 			displayCore->Context->Display(ais_line, true);
 			ais_line->SetColor(acolor);
 			// 处理事件，确保 UI 在长时间任务过程中仍能响应
@@ -405,6 +420,7 @@ void MillSimulation::DisPlayToolPaths()
 				//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
 				//drawer->SetLineAspect(asp);
 				//ais_curve->Attributes()->SetLineAspect(asp);
+				ToolPathCurves.push_back(circleEdge);
 				ais_curve->SetColor(acolor);
 				displayCore->Context->Display(ais_curve, true);
 				continue;
@@ -446,6 +462,7 @@ void MillSimulation::DisPlayToolPaths()
 				//Handle(Prs3d_LineAspect) asp = new Prs3d_LineAspect(acolor, Aspect_TOL_SOLID, 1.0);
 				//drawer->SetLineAspect(asp);
 				//ais_curve->Attributes()->SetLineAspect(asp);
+				ToolPathCurves.push_back(arcEdge);
 				ais_curve->SetColor(acolor);
 				displayCore->Context->Display(ais_curve, true);
 			}

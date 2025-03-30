@@ -23,6 +23,7 @@ public slots:
     void CreateBlankShape();
     void ResetBlankShape();
     void SetCuttingTool();
+    void ExportPathIGES();
 	void Clear();   
 private:
     Ui::CopyVericutClass ui;

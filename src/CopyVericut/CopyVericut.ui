@@ -678,9 +678,17 @@ p, li { white-space: pre-wrap; }
     <addaction name="import_machining_part"/>
     <addaction name="import_machine_model"/>
    </widget>
+   <widget class="QMenu" name="menu_4">
+    <property name="title">
+     <string>导出数据</string>
+    </property>
+    <addaction name="actionExport_IGES"/>
+    <addaction name="actionExport_Blank"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menu_3"/>
    <addaction name="menu_2"/>
+   <addaction name="menu_4"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="action">
@@ -762,10 +770,22 @@ p, li { white-space: pre-wrap; }
     <string>View_Rear</string>
    </property>
   </action>
+  <action name="actionExport_IGES">
+   <property name="text">
+    <string>导出路径到IGES</string>
+   </property>
+  </action>
+  <action name="actionExport_Blank">
+   <property name="text">
+    <string>导出仿真后毛坯</string>
+   </property>
+   <property name="toolTip">
+    <string>导出仿真后毛坯</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="CopyVericut.qrc"/>
-  <include location="C:/Users/Administrator/.designer/backup/CopyVericut.qrc"/>
  </resources>
  <connections/>
 </ui>

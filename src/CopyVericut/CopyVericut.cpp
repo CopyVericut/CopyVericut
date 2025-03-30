@@ -44,6 +44,8 @@ CopyVericut::CopyVericut(QWidget *par): QMainWindow(parent)
 	connect(ui.pushButton_6, SIGNAL(clicked()), this, SLOT(ResetBlankShape()));
 	/*清除*/
 	connect(ui.pushButton_8, SIGNAL(clicked()), this, SLOT(Clear()));
+	/*导出*/
+	connect(ui.actionExport_IGES, SIGNAL(triggered()), this, SLOT(ExportPathIGES()));
 	setFixedSize(855, 815);
 
 }
@@ -155,6 +157,17 @@ void CopyVericut::SetCuttingTool()
 	millSimulation->CuttingToolDiameter = ui.lineEdit->text().toDouble();
 	millSimulation->CuttingToolLength= ui.lineEdit_5->text().toDouble();
 
+}
+
+void CopyVericut::ExportPathIGES()
+{
+	statusBar()->showMessage(QString::fromLocal8Bit("状态：开始导出轨迹IGES"));
+	QString savePath = QFileDialog::getSaveFileName(parent, "选择保存路径", QDir::homePath());
+	if (!savePath.isEmpty())
+	{
+		millSimulation->ExportPathIGES(savePath.toStdString().data());
+	}
+	statusBar()->showMessage(QString::fromLocal8Bit("状态：轨迹IGES导出完毕"));
 }
 
 void CopyVericut::Clear()
